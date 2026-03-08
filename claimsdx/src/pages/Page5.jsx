@@ -113,7 +113,10 @@ function SpectrumBar({ metric, tierData, orgValue, onOrgChange }) {
           <div style={{ position: "absolute", left: pct(indMin) + "%", width: (pct(indMax) - pct(indMin)) + "%", top: 0, bottom: 0, background: "linear-gradient(90deg,#fde68a,#fbbf24)" }} />
           <div style={{ position: "absolute", left: pct(bicMin) + "%", width: (pct(bicMax) - pct(bicMin)) + "%", top: 0, bottom: 0, background: "linear-gradient(90deg,#86efac,#22c55e)" }} />
           {orgPct !== null && (
-            <div style={{ position: "absolute", left: orgPct + "%", top: -4, bottom: -4, width: 3, background: statusColor[orgStatus], borderRadius: 3, transform: "translateX(-1.5px)", boxShadow: "0 0 0 2px white, 0 0 0 3.5px " + statusColor[orgStatus], zIndex: 5 }} />
+            <div style={{ position: "absolute", left: orgPct + "%", top: -10, transform: "translateX(-50%)", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", pointerEvents: "none" }}>
+                <div style={{ width: 0, height: 0, borderLeft: "7px solid transparent", borderRight: "7px solid transparent", borderTop: "10px solid " + statusColor[orgStatus], filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
+                <div style={{ height: 26, width: 2, background: statusColor[orgStatus], marginTop: 0 }} />
+              </div>
           )}
         </div>
         <div style={{ position: "relative", height: 12 }}>
@@ -154,13 +157,16 @@ function BenchmarkTable({ lobKey, tier }) {
 
       {/* Legend */}
       <div style={{ ...card, padding: "10px 16px", marginBottom: 14, display: "flex", gap: 20, flexWrap: "wrap" }}>
-        {[["#fee2e2", "#991b1b", "Below industry"], ["#fbbf24", "#92400e", "Industry range"], ["#22c55e", "#166534", "Best-in-Class"], ["#1a4731", "#1a4731", "▼ Your position"]].map(([bg, clr, lbl]) => (
+        {[["#fee2e2", "#991b1b", "Below industry"], ["#fbbf24", "#92400e", "Industry range"], ["#22c55e", "#166534", "Best-in-Class"]].map(([bg, clr, lbl]) => (
           <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            {lbl.startsWith("▼") ? <div style={{ width: 3, height: 14, background: clr, borderRadius: 2 }} />
-              : <div style={{ width: 12, height: 7, borderRadius: 2, background: bg, border: "1px solid " + clr + "55" }} />}
-            <span style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textSoft }}>{lbl.replace("▼ ", "")}</span>
+            <div style={{ width: 12, height: 7, borderRadius: 2, background: bg, border: "1px solid " + clr + "55" }} />
+            <span style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textSoft }}>{lbl}</span>
           </div>
         ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "8px solid #1a4731" }} />
+          <span style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textSoft }}>You are here</span>
+        </div>
         <span style={{ marginLeft: "auto", fontFamily: FONT.sans, fontSize: 10, color: C.textMuted, fontStyle: "italic" }}>Enter value — position plots automatically</span>
       </div>
 
@@ -454,17 +460,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
             Quality and Compliance anchors the portfolio. Technology and Financial Leakage are the primary opportunity — <strong style={{ color: "#1a4731" }}>$3.5M–$5M annually</strong>.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {SAMPLE_SCORES.map(s => {
-            const lc = LENS_COLORS[s.colorKey];
-            return (
-              <div key={s.label} style={{ textAlign: "center", padding: "10px 14px", borderRadius: 6, border: "1px solid " + lc.border, background: lc.bg, minWidth: 68 }}>
-                <div style={{ fontFamily: FONT.mono, fontSize: 18, fontWeight: 800, color: lc.color, lineHeight: 1 }}>{s.score}</div>
-                <div style={{ fontFamily: FONT.sans, fontSize: 9, color: C.textSoft, marginTop: 4, lineHeight: 1.3 }}>{s.label.split(" ")[0]}</div>
-              </div>
-            );
-          })}
-        </div>
+
       </div>
 
       {/* Tabs */}
