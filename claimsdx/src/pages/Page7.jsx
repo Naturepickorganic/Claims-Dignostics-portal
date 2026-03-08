@@ -145,38 +145,42 @@ function L3Row({ item, scores, onScore }) {
             })}
           </div>
 
-          {/* Scoring — Technology and Process side by side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 20, alignItems: "flex-start" }}>
-            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>⚙ Technology</div>
-              <ScorePill value={techScore} onChange={v => onScore(item.l3 + "_tech", v)} />
+          {/* Scoring — Process first, then Technology */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Section divider label */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>Score this sub-process</span>
+              <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
             </div>
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>◎ Process</div>
-              <ScorePill value={procScore} onChange={v => onScore(item.l3 + "_proc", v)} />
-            </div>
-            {techScore && procScore && (
-              <div style={{ textAlign: "center", padding: "12px 16px", background: "white", border: "2px solid " + SCALE_COLORS[Math.round((techScore+procScore)/2)-1], borderRadius: 8 }}>
-                <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Combined</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], fontFamily: "monospace", lineHeight: 1 }}>
-                  {((techScore + procScore) / 2).toFixed(1)}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 16, alignItems: "flex-start" }}>
+              {/* Process first */}
+              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10, display: "flex", alignItems: "center", gap: 5 }}>
+                  <span>◎</span> Process Maturity
                 </div>
-                <div style={{ fontSize: 9, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], marginTop: 3 }}>avg</div>
+                <ScorePill value={procScore} onChange={v => onScore(item.l3 + "_proc", v)} />
               </div>
-            )}
-          </div>
-          {/* Scale reference */}
-          <div style={{ marginTop: 12, padding: "10px 12px", background: "#f8fafc", borderRadius: 6, border: "1px solid #e2e8f0" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Scoring Scale Reference</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {SCALE_LABELS.map((l,i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: SCALE_COLORS[i], background: SCALE_BG[i], border: "1px solid " + SCALE_BORDER[i], borderRadius: 4, padding: "1px 7px", flexShrink: 0, minWidth: 22, textAlign: "center" }}>{i+1}</span>
-                  <span style={{ fontSize: 11, color: C.textSoft, lineHeight: 1.5 }}>{l.replace(/^\d+ — /, "")}</span>
+              {/* Technology second */}
+              <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "14px 16px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10, display: "flex", alignItems: "center", gap: 5 }}>
+                  <span>⚙</span> Technology Maturity
                 </div>
-              ))}
+                <ScorePill value={techScore} onChange={v => onScore(item.l3 + "_tech", v)} />
+              </div>
+              {/* Combined score */}
+              {techScore && procScore && (
+                <div style={{ textAlign: "center", padding: "14px 16px", background: "white", border: "2px solid " + SCALE_COLORS[Math.round((techScore+procScore)/2)-1], borderRadius: 8, alignSelf: "center" }}>
+                  <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Combined</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], fontFamily: "monospace", lineHeight: 1 }}>
+                    {((techScore + procScore) / 2).toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: 9, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], marginTop: 3 }}>avg</div>
+                </div>
+              )}
             </div>
           </div>
+
         </div>
       )}
     </div>
@@ -304,11 +308,18 @@ export default function Page7({ onNext, onBack, processSelections = [] }) {
             </span>
           </div>
 
-          {/* Scale legend */}
-          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-            {SCALE_LABELS.map((l,i) => (
-              <span key={l} style={{ fontSize: 10, color: SCALE_COLORS[i], background: SCALE_BG[i], borderRadius: 4, padding: "2px 8px", border: "1px solid " + SCALE_COLORS[i] + "55", fontWeight: 600 }}>{l}</span>
-            ))}
+          {/* Scale legend — shown once at top only */}
+          <div style={{ marginTop: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "10px 14px" }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Scoring Scale</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {SCALE_LABELS.map((l,i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: SCALE_COLORS[i], background: SCALE_BG[i], border: "1px solid " + SCALE_BORDER[i], borderRadius: 4, padding: "1px 7px" }}>{i+1}</span>
+                  <span style={{ fontSize: 10, color: C.textSoft }}>{l.replace(/^\d+ — /, "")}</span>
+                  {i < SCALE_LABELS.length-1 && <span style={{ color: "#d8ebe2", fontSize: 10 }}>·</span>}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
