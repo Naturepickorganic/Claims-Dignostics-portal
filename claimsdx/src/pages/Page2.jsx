@@ -61,7 +61,7 @@ export default function Page2({ onNext, onBack, onCarrierInfo, initialData }) {
 
   return (
     <PageWrap maxWidth={740}>
-      <SectionHead tag="Step 1 of 4" title="Carrier Information"
+      <SectionHead tag="Step 1 of 4" title="P&C Insurer Details"
         subtitle="Tell us about your organisation to personalise the assessment benchmarks." />
 
       {/* Organisation details */}
