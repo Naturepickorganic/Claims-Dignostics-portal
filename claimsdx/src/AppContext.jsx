@@ -7,6 +7,8 @@ import {
   createAssessment,
   saveProgressToDB,
   loadProgressFromDB,
+  markAssessmentComplete,
+  saveResults,
 } from "./lib/progressDB.js";
 
 const AppContext = createContext(null);
@@ -124,6 +126,47 @@ export function AppProvider({ children }) {
     setAssessmentId(null);
   }, []);
 
+  // ── Mark assessment complete + persist results ────────────────
+  // Called by Page5 on first render with real data.
+  // Writes results to assessment_results, flips status → 'complete',
+  // and clears the in-progress progress blob so it no longer resumes.
+  const completeAssessment = useCallback(async (results) => {
+    // Always clear localStorage progress — regardless of Supabase mode
+    localStorage.removeItem("claimsdx_progress");
+
+    if (!SUPABASE_ENABLED || !auth.session || auth.session.user.id === "local") return;
+
+    const userId = auth.session.user.id;
+    const asmId  = assessmentIdRef.current;
+    if (!asmId) return; // no assessment to mark complete
+
+    try {
+      // 1. Persist the computed results to assessment_results table
+      const { error: resErr } = await saveResults(userId, asmId, null, {
+        overallScore:       results.overallScore,
+        maturityLevel:      results.maturityLevel,
+        lensScores:         results.lensScores         || {},
+        lensGaps:           results.lensGaps           || {},
+        strengths:          results.strengths          || [],
+        improvements:       results.improvements       || [],
+        valueOpportunities: results.valueOpportunities || [],
+        tierUsed:           results.tierUsed,
+        lobPrimary:         results.lobPrimary,
+      });
+      if (resErr) console.error("saveResults error:", resErr);
+
+      // 2. Flip status → 'complete', set completed_at
+      const { error: completeErr } = await markAssessmentComplete(asmId);
+      if (completeErr) console.error("markAssessmentComplete error:", completeErr);
+
+      // 3. Reset in-memory assessment ref so a new assessment starts fresh
+      assessmentIdRef.current = null;
+      setAssessmentId(null);
+    } catch (e) {
+      console.error("completeAssessment failed:", e);
+    }
+  }, [auth.session]);
+
   return (
     <AppContext.Provider value={{
       session:         auth.session,
@@ -140,6 +183,7 @@ export function AppProvider({ children }) {
       saveProgress,
       loadProgress,
       clearProgress,
+      completeAssessment,
       saveStatus,
       assessmentId,
     }}>
