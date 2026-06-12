@@ -84,32 +84,51 @@ function calcValueOpportunities(lensScores, tier=2) {
 }
 
 // ─── Compute scores from metrics data (metrics path) ──────────
-function computeScoresFromMetrics(metricsData, carrierInfo) {
-  const lensAccum = {};
+// ─── Tier-aware scoring from metrics input ────────────────────
+// Uses indMin/indMax/bicMin/bicMax per tier for accurate scoring
+// Score bands: 80-100 = BIC zone, 50-80 = industry zone, 0-50 = below industry
+function scoreMetric(val, tierBench, higherIsBetter) {
+  const { indMin, indMax, bicMin, bicMax } = tierBench;
+  let score;
+  if (higherIsBetter) {
+    // Higher is better: bicMin+ = green (80-100), indMin..bicMin = amber (50-80), <indMin = red (0-50)
+    if (val >= bicMax)  return 100;
+    if (val >= bicMin)  score = 80 + ((val - bicMin) / Math.max(0.001, bicMax - bicMin)) * 20;
+    else if (val >= indMin) score = 50 + ((val - indMin) / Math.max(0.001, bicMin - indMin)) * 30;
+    else score = Math.max(5, (val / Math.max(0.001, indMin)) * 50);
+  } else {
+    // Lower is better: <=bicMax = green (80-100), bicMax..indMax = amber (50-80), >indMax = red (0-50)
+    if (val <= bicMin)  return 100;
+    if (val <= bicMax)  score = 80 + ((bicMax - val) / Math.max(0.001, bicMax - bicMin)) * 20;
+    else if (val <= indMax) score = 50 + ((indMax - val) / Math.max(0.001, indMax - bicMax)) * 30;
+    else score = Math.max(5, (indMax / Math.max(0.001, val)) * 50);
+  }
+  return Math.min(100, Math.max(0, Math.round(score)));
+}
+
+function computeScoresFromMetrics(metricsData, carrierInfo, metricBenchmarks) {
   const LENS_KEYS = ["process_efficiency","financial_leakage","quality_compliance","technology","org_performance"];
+  const lensAccum = {};
   LENS_KEYS.forEach(k => { lensAccum[k] = { total:0, count:0 }; });
 
-  const ALL_CATS = Object.keys(METRICS_DATA);
-  const lobs = carrierInfo?.lobs?.length > 0 ? carrierInfo.lobs : ["pa"];
+  const tier  = `t${carrierInfo?.tier || 2}`;
+  const lobs  = carrierInfo?.lobs?.length > 0 ? carrierInfo.lobs : ["pa"];
+  const bmData = metricBenchmarks || METRICS_DATA; // fall back to constants if not in context
 
-  lobs.forEach(lob => {
-    ALL_CATS.forEach(cat => {
-      const lensKey = CAT_TO_LENS[cat];
-      if (!lensKey) return;
-      const metrics = METRICS_DATA[cat] || [];
-      metrics.forEach(([name, unit, higher, bench]) => {
+  Object.keys(METRICS_DATA).forEach(cat => {
+    const lensKey = CAT_TO_LENS[cat];
+    if (!lensKey) return;
+    const metrics = bmData[cat] || METRICS_DATA[cat] || [];
+    metrics.forEach(([name, unit, higherIsBetter, tierData]) => {
+      const tierBench = tierData?.[tier] || tierData?.t2;
+      if (!tierBench) return;
+      lobs.forEach(lob => {
         const key = `${lob}-${cat}-${name}`;
         const raw = metricsData?.[key];
         if (!raw || raw === "") return;
         const val = parseFloat(raw);
-        if (isNaN(val) || bench === 0) return;
-        // Score 0-100: at benchmark = 65, at 2× benchmark = 100 (or inverse for lower-is-better)
-        let score;
-        if (higher) {
-          score = Math.min(100, Math.max(0, (val / bench) * 65));
-        } else {
-          score = Math.min(100, Math.max(0, (bench / Math.max(val, 0.01)) * 65));
-        }
+        if (isNaN(val)) return;
+        const score = scoreMetric(val, tierBench, higherIsBetter);
         lensAccum[lensKey].total += score;
         lensAccum[lensKey].count++;
       });
@@ -211,112 +230,142 @@ function RadarChart({ scores, size }) {
   );
 }
 
-// ─── MetricSpectrumRow — uses METRICS_DATA format [name,unit,higherIsBetter,median,top25,desc]
-// orgValue comes directly from metricsData via key "{lob}-{cat}-{name}"
-function MetricSpectrumRow({ name, unit, higherIsBetter, median, top25, desc, orgValue, category }) {
+// ─── MetricSpectrumRow — tier-specific 3-zone spectrum bar ───────
+// Zones: red=below industry | amber=industry range | green=BIC range
+// For higherIsBetter: left=bad, right=good
+// For lowerIsBetter: right=bad, left=good (axis inverted)
+function MetricSpectrumRow({ name, unit, higherIsBetter, indMin, indMax, bicMin, bicMax, desc, orgValue, category }) {
   const orgNum = orgValue !== "" && orgValue !== undefined ? parseFloat(orgValue) : null;
   const hasVal = orgNum !== null && !isNaN(orgNum);
 
-  // Build axis percentages — left=worst, right=best
-  const pad = 0.3;
+  // Determine org status vs tier benchmarks
+  let orgStatus = "below";
+  if (hasVal) {
+    const atBIC = higherIsBetter ? orgNum >= bicMin : orgNum <= bicMax;
+    const atInd = higherIsBetter ? orgNum >= indMin : orgNum <= indMax;
+    orgStatus = atBIC ? "top" : atInd ? "median" : "below";
+  }
+  const statusColor = { top:"#166534", median:"#92400e", below:"#991b1b" };
+  const statusBg    = { top:"#f0f7f3", median:"#fef3c7", below:"#fee2e2" };
+  const statusLabel = { top:"BIC Range", median:"Industry Range", below:"Below Industry" };
+
+  // Build axis percentages for spectrum bar
+  // Higher-is-better: 0..indMin = red, indMin..bicMin = amber, bicMin.. = green
+  // Lower-is-better:  ..bicMax = green, bicMax..indMax = amber, indMax.. = red (right=bad)
   let medPct, topPct, orgPct;
+  const pad = 0.25;
   if (higherIsBetter) {
-    const axMax = top25 * (1 + pad);
-    medPct = Math.min(88, (median / axMax) * 100);
-    topPct = Math.min(95, (top25  / axMax) * 100);
+    const axMax = (bicMax||bicMin) * (1 + pad);
+    medPct = Math.min(88, ((indMin||0) / axMax) * 100);
+    topPct = Math.min(95, ((bicMin||0) / axMax) * 100);
     orgPct = hasVal ? Math.min(97, Math.max(2, (orgNum / axMax) * 100)) : null;
   } else {
-    // Lower = better: invert axis so worst(high) is left, best(low) is right
-    const axMax = median * (1 + pad);
-    medPct = Math.max(12, (1 - median / axMax) * 100);
-    topPct = Math.max(5,  (1 - top25  / axMax) * 100);
+    // Invert: lower value → further right → better
+    const axMax = (indMax||indMin||1) * (1 + pad);
+    medPct = Math.max(5,  (1 - (indMax||0)  / axMax) * 100);
+    topPct = Math.max(12, (1 - (bicMax||0)  / axMax) * 100);
     orgPct = hasVal ? Math.max(2, Math.min(97, (1 - Math.min(orgNum, axMax) / axMax) * 100)) : null;
   }
   if (topPct < medPct) [topPct, medPct] = [medPct, topPct];
 
-  let orgStatus = "below";
-  if (hasVal) {
-    const atTop = higherIsBetter ? orgNum >= top25  : orgNum <= top25;
-    const atMed = higherIsBetter ? orgNum >= median : orgNum <= median;
-    orgStatus = atTop ? "top" : atMed ? "median" : "below";
-  }
-  const statusColor = { top:"#166534", median:"#92400e", below:"#991b1b" };
-  const statusBg    = { top:"#f0f7f3", median:"#fef3c7", below:"#fee2e2" };
-  const statusLabel = { top:"Top 25%", median:"At Median", below:"Below Median" };
-  const fmt = v => v == null ? "—" : (v >= 1000 ? (v/1000).toFixed(1)+"K" : v % 1 === 0 ? String(v) : v.toFixed(1));
+  const fmt = v => v == null ? "—" : (v >= 1000 ? (v/1000).toFixed(1)+"K" : Math.abs(v%1)<0.001 ? String(v) : v.toFixed(1));
 
   return (
-    <div style={{display:"grid",gridTemplateColumns:"200px 110px 1fr 120px",gap:12,padding:"13px 18px",borderBottom:"1px solid #edf5f0",alignItems:"center"}}>
+    <div style={{display:"grid",gridTemplateColumns:"200px 115px 1fr 130px",gap:12,padding:"13px 18px",borderBottom:"1px solid #edf5f0",alignItems:"center"}}>
+      {/* Name + desc */}
       <div>
         <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid}}>{name}</div>
         <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,marginTop:1,lineHeight:1.4}}>{desc}</div>
         <div style={{fontSize:9,color:C.textMuted,fontFamily:FONT.mono,marginTop:2}}>{unit} · {category}</div>
       </div>
+
+      {/* Your value */}
       <div style={{
         padding:"7px 10px",borderRadius:6,fontSize:13,fontFamily:FONT.mono,fontWeight:hasVal?700:400,
-        background:hasVal ? statusBg[orgStatus] : "#f7faf8",
-        color:hasVal ? statusColor[orgStatus] : C.textMuted,
-        border:"1.5px solid "+(hasVal ? statusColor[orgStatus]+"55" : "#e2e8f0"),
+        background:hasVal?statusBg[orgStatus]:"#f7faf8",
+        color:hasVal?statusColor[orgStatus]:C.textMuted,
+        border:"1.5px solid "+(hasVal?statusColor[orgStatus]+"55":"#e2e8f0"),
         textAlign:"center",
       }}>
         {hasVal ? `${fmt(orgNum)} ${unit}` : "—"}
-        {hasVal && <div style={{fontSize:8,fontWeight:600,marginTop:1,letterSpacing:"0.04em"}}>{statusLabel[orgStatus]}</div>}
+        {hasVal && <div style={{fontSize:8,fontWeight:700,marginTop:1,letterSpacing:"0.04em"}}>{statusLabel[orgStatus]}</div>}
       </div>
-      {/* Spectrum bar with paddingTop so ▲ label has room */}
+
+      {/* Spectrum bar */}
       <div style={{paddingTop:18}}>
         <div style={{position:"relative",height:16,borderRadius:3}}>
+          {/* Red zone: below industry */}
           <div style={{position:"absolute",left:0,width:medPct+"%",top:0,bottom:0,background:"#fecaca",borderRadius:"3px 0 0 3px"}}/>
+          {/* Amber zone: industry range */}
           <div style={{position:"absolute",left:medPct+"%",width:(topPct-medPct)+"%",top:0,bottom:0,background:"#fde68a"}}/>
+          {/* Green zone: BIC */}
           <div style={{position:"absolute",left:topPct+"%",width:(100-topPct)+"%",top:0,bottom:0,background:"#86efac",borderRadius:"0 3px 3px 0"}}/>
+          {/* Industry boundary tick */}
           <div style={{position:"absolute",left:medPct+"%",top:0,bottom:0,width:2,background:"#92400e",opacity:0.7}}/>
+          {/* BIC boundary tick */}
           <div style={{position:"absolute",left:topPct+"%",top:0,bottom:0,width:2,background:"#166534",opacity:0.7}}/>
+          {/* ▲ You marker */}
           {orgPct !== null && (
-            <div style={{position:"absolute",left:orgPct+"%",top:-17,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",pointerEvents:"none",zIndex:10}}>
+            <div style={{position:"absolute",left:orgPct+"%",top:-17,transform:"translateX(-50%)",
+              display:"flex",flexDirection:"column",alignItems:"center",pointerEvents:"none",zIndex:10}}>
               <div style={{fontSize:8,fontWeight:800,color:statusColor[orgStatus],fontFamily:FONT.sans,whiteSpace:"nowrap",lineHeight:1}}>▲ You</div>
-              <div style={{width:0,height:0,borderLeft:"5px solid transparent",borderRight:"5px solid transparent",borderBottom:"6px solid "+statusColor[orgStatus],marginTop:1}}/>
+              <div style={{width:0,height:0,borderLeft:"5px solid transparent",borderRight:"5px solid transparent",
+                borderBottom:"6px solid "+statusColor[orgStatus],marginTop:1}}/>
             </div>
           )}
         </div>
+        {/* Axis labels */}
         <div style={{position:"relative",height:14,marginTop:2}}>
-          <span style={{position:"absolute",left:medPct+"%",transform:"translateX(-50%)",fontSize:9,fontFamily:FONT.mono,color:"#92400e",whiteSpace:"nowrap",fontWeight:600}}>{fmt(median)}</span>
-          <span style={{position:"absolute",left:topPct+"%",transform:"translateX(-50%)",fontSize:9,fontFamily:FONT.mono,color:"#166534",whiteSpace:"nowrap",fontWeight:600}}>{fmt(top25)}</span>
+          <span style={{position:"absolute",left:medPct+"%",transform:"translateX(-50%)",fontSize:9,fontFamily:FONT.mono,color:"#92400e",whiteSpace:"nowrap",fontWeight:600}}>
+            {higherIsBetter ? fmt(indMin) : fmt(indMax)}
+          </span>
+          <span style={{position:"absolute",left:topPct+"%",transform:"translateX(-50%)",fontSize:9,fontFamily:FONT.mono,color:"#166534",whiteSpace:"nowrap",fontWeight:600}}>
+            {higherIsBetter ? fmt(bicMin) : fmt(bicMax)}
+          </span>
         </div>
       </div>
+
+      {/* Reference values */}
       <div style={{textAlign:"right",fontFamily:FONT.mono,fontSize:10}}>
-        <div style={{color:"#166534",fontWeight:700,marginBottom:2}}>Top 25%: {fmt(top25)} {unit}</div>
-        <div style={{color:"#92400e",marginBottom:2}}>Median: {fmt(median)} {unit}</div>
-        <div style={{fontSize:9,color:C.textMuted}}>{higherIsBetter?"Higher = better":"Lower = better"}</div>
+        <div style={{color:"#166534",fontWeight:700,marginBottom:2}}>BIC: {fmt(bicMin)}–{fmt(bicMax)} {unit}</div>
+        <div style={{color:"#92400e",marginBottom:2}}>Ind: {fmt(indMin)}–{fmt(indMax)} {unit}</div>
+        <div style={{fontSize:9,color:C.textMuted}}>{higherIsBetter?"↑ Higher = better":"↓ Lower = better"}</div>
       </div>
     </div>
   );
 }
-
-// BenchmarkTable — uses METRICS_DATA (same dataset as Page4)
-// Keys: "{lobId}-{category}-{metricName}" — exact match with Page4
-// Shows ONLY rows where user entered a value
+// BenchmarkTable — uses metricBenchmarks (from AppContext, admin-editable)
+// Keys match Page4 exactly: "{lobId}-{category}-{metricName}"
+// Shows ONLY rows where user entered a value — filtered by carrier tier
 function BenchmarkTable({ carrierLobs, carrierTier, metricsData }) {
+  const { metricBenchmarks } = useApp();
   const ALL_CATS = ["Cost Efficiency","Claim Effectiveness","Customer Experience","Adjuster Productivity","Fraud Prevention"];
-  const lobs = carrierLobs?.length > 0 ? carrierLobs : ["pa"];
+  const lobs     = carrierLobs?.length > 0 ? carrierLobs : ["pa"];
+  const tierKey  = `t${carrierTier || 2}`;
   const [activeCat, setActiveCat] = useState("all");
 
+  // Build flat list of only entered rows, with tier-specific benchmarks
   const enteredRows = useMemo(() => {
     const rows = [];
-    for (const lob of lobs) {
-      for (const cat of ALL_CATS) {
-        for (const [name, unit, higherIsBetter, median, top25, desc] of (METRICS_DATA[cat] || [])) {
+    for (const cat of ALL_CATS) {
+      const metrics = metricBenchmarks[cat] || [];
+      for (const [name, unit, higherIsBetter, tierData, desc] of metrics) {
+        const tierBench = tierData[tierKey] || tierData.t2;
+        for (const lob of lobs) {
           const key = `${lob}-${cat}-${name}`;
           const val = metricsData?.[key];
           if (val !== undefined && val !== "" && val !== null) {
-            rows.push({ lob, cat, name, unit, higherIsBetter, median, top25, desc, val, key });
+            rows.push({ lob, cat, name, unit, higherIsBetter, ...tierBench, desc, val, key });
+            break; // one entry per metric (first lob with value)
           }
         }
       }
     }
     return rows;
-  }, [metricsData, JSON.stringify(lobs)]);
+  }, [metricsData, metricBenchmarks, JSON.stringify(lobs), tierKey]);
 
   const filledCats = [...new Set(enteredRows.map(r => r.cat))];
-  const visible = activeCat === "all" ? enteredRows : enteredRows.filter(r => r.cat === activeCat);
+  const visible    = activeCat === "all" ? enteredRows : enteredRows.filter(r => r.cat === activeCat);
 
   if (enteredRows.length === 0) {
     return (
@@ -331,45 +380,60 @@ function BenchmarkTable({ carrierLobs, carrierTier, metricsData }) {
     );
   }
 
+  const TIER_LABELS = { t1:"Tier 1 (>$5B DWP)", t2:"Tier 2 ($1B–$5B)", t3:"Tier 3 ($500M–$1B)" };
+
   return (
     <div>
       <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-        <button onClick={()=>setActiveCat("all")} style={{padding:"5px 12px",borderRadius:5,fontSize:11,fontWeight:activeCat==="all"?700:400,border:"1px solid "+(activeCat==="all"?"#1a4731":"#d8ebe2"),background:activeCat==="all"?"#1a4731":"white",color:activeCat==="all"?"white":C.textSoft,cursor:"pointer"}}>
+        <button onClick={()=>setActiveCat("all")} style={{padding:"5px 12px",borderRadius:5,fontSize:11,
+          fontWeight:activeCat==="all"?700:400,border:"1px solid "+(activeCat==="all"?"#1a4731":"#d8ebe2"),
+          background:activeCat==="all"?"#1a4731":"white",color:activeCat==="all"?"white":C.textSoft,cursor:"pointer"}}>
           All ({enteredRows.length})
         </button>
         {filledCats.map(c=>(
-          <button key={c} onClick={()=>setActiveCat(c===activeCat?"all":c)} style={{padding:"5px 12px",borderRadius:5,fontSize:11,fontWeight:activeCat===c?700:400,border:"1px solid "+(activeCat===c?"#1a4731":"#d8ebe2"),background:activeCat===c?"#1a4731":"white",color:activeCat===c?"white":C.textSoft,cursor:"pointer"}}>
+          <button key={c} onClick={()=>setActiveCat(c===activeCat?"all":c)} style={{padding:"5px 12px",borderRadius:5,fontSize:11,
+            fontWeight:activeCat===c?700:400,border:"1px solid "+(activeCat===c?"#1a4731":"#d8ebe2"),
+            background:activeCat===c?"#1a4731":"white",color:activeCat===c?"white":C.textSoft,cursor:"pointer"}}>
             {c} ({enteredRows.filter(r=>r.cat===c).length})
           </button>
         ))}
         <span style={{marginLeft:"auto",fontSize:11,fontFamily:FONT.sans,color:"#1a4731",fontWeight:600}}>
-          {enteredRows.length} metrics · Tier {carrierTier} benchmarks
+          {enteredRows.length} metrics · {TIER_LABELS[tierKey]} benchmarks
         </span>
       </div>
+
+      {/* Legend */}
       <div style={{...card,padding:"10px 16px",marginBottom:14,display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}>
-        {[["#fecaca","#991b1b","Below Median"],["#fde68a","#92400e","Median → Top 25%"],["#86efac","#166534","Top 25%"]].map(([bg,clr,lbl])=>(
+        {[["#fecaca","#991b1b","Below Industry"],["#fde68a","#92400e","Industry Range (IND)"],["#86efac","#166534","Best-in-Class (BIC)"]].map(([bg,clr,lbl])=>(
           <div key={lbl} style={{display:"flex",alignItems:"center",gap:5}}>
             <div style={{width:14,height:8,borderRadius:2,background:bg,border:"1px solid "+clr+"55"}}/>
             <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textSoft}}>{lbl}</span>
           </div>
         ))}
-        <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,fontStyle:"italic",marginLeft:"auto"}}>▲ You = your entered value on the spectrum</span>
+        <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,fontStyle:"italic",marginLeft:"auto"}}>
+          ▲ You = your value on the {TIER_LABELS[tierKey]} spectrum
+        </span>
       </div>
+
       <div style={{...card,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"200px 110px 1fr 120px",gap:12,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+        <div style={{display:"grid",gridTemplateColumns:"200px 115px 1fr 130px",gap:12,padding:"10px 18px",
+          background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
           {[["Metric & Category","left"],["Your Value","center"],["Benchmark Spectrum","left"],["Reference Range","right"]].map(([h,align])=>(
-            <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.08em",textAlign:align}}>{h}</div>
+            <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,
+              textTransform:"uppercase",letterSpacing:"0.08em",textAlign:align}}>{h}</div>
           ))}
         </div>
         {visible.map(r=>(
-          <MetricSpectrumRow key={r.key} name={r.name} unit={r.unit}
-            higherIsBetter={r.higherIsBetter} median={r.median} top25={r.top25}
+          <MetricSpectrumRow key={r.key}
+            name={r.name} unit={r.unit} higherIsBetter={r.higherIsBetter}
+            indMin={r.indMin} indMax={r.indMax} bicMin={r.bicMin} bicMax={r.bicMax}
             desc={r.desc} orgValue={r.val} category={r.cat}/>
         ))}
       </div>
     </div>
   );
 }
+
 
 // ─── Process results tab ──────────────────────────────────────
 function TabProcessResults({ maturityScores }) {
@@ -605,37 +669,6 @@ function TabOverview({ displayScores }) {
   );
 }
 
-// ─── Tab: Benchmarks ─────────────────────────────────────────
-// TabBenchmarks — tier is auto-set from carrierInfo (no manual override)
-// BenchmarkTable uses METRICS_DATA directly, shows only filled rows
-function TabBenchmarks({ metricsData, carrierInfo }) {
-  const carrierTier = carrierInfo?.tier || 2;
-  const carrierLobs = carrierInfo?.lobs || ["pa"];
-  const LOB_LABEL   = {pa:"Personal Auto",ph:"Personal Home",ca:"Comm. Auto",cp:"Comm. Property",wc:"Workers Comp",gl:"Gen. Liability",bop:"BOP/BIP"};
-
-  return (
-    <div>
-      {/* Header strip — shows carrier context, no tier picker */}
-      <div style={{...card,padding:"12px 18px",marginBottom:16,display:"flex",gap:16,alignItems:"center",flexWrap:"wrap",borderLeft:"4px solid #1a4731"}}>
-        <div>
-          <span style={{fontFamily:FONT.sans,fontSize:11,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em"}}>Carrier Profile</span>
-          <div style={{fontFamily:FONT.sans,fontSize:13,color:C.text,marginTop:2}}>
-            <strong>{carrierInfo?.name||"—"}</strong>
-            {" · "}
-            <span style={{color:"#1a4731",fontWeight:600}}>Tier {carrierTier}</span>
-            {" · "}
-            {carrierLobs.map(l=>LOB_LABEL[l]||l).join(", ")}
-          </div>
-        </div>
-        <div style={{marginLeft:"auto",fontFamily:FONT.sans,fontSize:11,color:C.textSoft}}>
-          Benchmarks use Tier {carrierTier} median &amp; top-quartile thresholds · only filled metrics shown
-        </div>
-      </div>
-      <BenchmarkTable carrierLobs={carrierLobs} carrierTier={carrierTier} metricsData={metricsData}/>
-    </div>
-  );
-}
-
 // ─── Tab: Findings ────────────────────────────────────────────
 function TabFindings({ displayScores }) {
   const strengths    = displayScores.filter(s=>s.score>=65).map(s=>`${s.label}: score ${s.score} (${s.score>=80?"Leading":"+"+Math.abs(s.gap)+"pp above median"})`);
@@ -757,7 +790,7 @@ function TabRoadmap({ displayScores, valueOpps }) {
 export default function Page5({ onBack, setPage, onNext, onDashboard, role, readOnly, assessment,
   metricsData, maturityScores, assessmentPath, carrierInfo }) {
 
-  const { completeAssessment } = useApp();
+  const { completeAssessment, metricBenchmarks } = useApp();
 
   const hasMetrics  = metricsData  && Object.keys(metricsData).length > 0;
   const hasMaturity = maturityScores && Object.keys(maturityScores).length > 0;
@@ -766,7 +799,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   // Compute lens scores from real data
   const lensScores = useMemo(()=>{
     if (readOnly && assessment?.lens_scores) return assessment.lens_scores;
-    if (hasMetrics)  return computeScoresFromMetrics(metricsData, carrierInfo);
+    if (hasMetrics)  return computeScoresFromMetrics(metricsData, carrierInfo, metricBenchmarks);
     if (hasMaturity) return computeScoresFromMaturity(maturityScores);
     return {};
   }, [metricsData, maturityScores, readOnly, assessment]);
