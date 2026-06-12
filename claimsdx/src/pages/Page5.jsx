@@ -757,6 +757,8 @@ function TabRoadmap({ displayScores, valueOpps }) {
 export default function Page5({ onBack, setPage, onNext, onDashboard, role, readOnly, assessment,
   metricsData, maturityScores, assessmentPath, carrierInfo }) {
 
+  const { completeAssessment } = useApp();
+
   const hasMetrics  = metricsData  && Object.keys(metricsData).length > 0;
   const hasMaturity = maturityScores && Object.keys(maturityScores).length > 0;
   const hasRealData = hasMetrics || hasMaturity;
@@ -781,6 +783,81 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   const maturityColor = overall>=80?"#166534":overall>=65?"#1a4731":overall>=50?"#92400e":"#991b1b";
 
   const valueOpps = useMemo(()=>calcValueOpportunities(lensScores, carrierInfo?.tier||2), [lensScores, carrierInfo]);
+
+  // ── Fire once when real results are available (not readOnly) ─
+  // This is the "completion moment" — flips status to complete in Supabase
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (readOnly || !hasRealData || completedRef.current) return;
+    if (!overall || overall === 0) return;
+    completedRef.current = true; // prevent double-fire
+
+    // Build gaps: difference between each lens score and industry median (65)
+    const lensGaps = Object.fromEntries(
+      Object.entries(lensScores).map(([k, v]) => [k, Math.round((v - 65) * 10) / 10])
+    );
+    // Derive strengths and improvements from lens scores
+    const lensEntries  = Object.entries(lensScores);
+    const strengths    = lensEntries.filter(([,v]) => v >= 65).map(([k]) => LENS_LABELS_MAP[k]).filter(Boolean);
+    const improvements = lensEntries.filter(([,v]) => v <  65).map(([k]) => LENS_LABELS_MAP[k]).filter(Boolean);
+
+    completeAssessment({
+      overallScore:       overall,
+      maturityLevel:      maturity,
+      lensScores,
+      lensGaps,
+      strengths,
+      improvements,
+      valueOpportunities: valueOpps.map(v => ({ label: v.label, value: v.value, basis: v.basis })),
+      tierUsed:           carrierInfo?.tier || 2,
+      lobPrimary:         carrierInfo?.lobs?.[0] || null,
+    });
+  }, [hasRealData, readOnly, overall]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── GATE: no data entered — block results ─────────────────────
+  if (!hasRealData && !readOnly) {
+    const hasCarrier    = carrierInfo?.name;
+    const hasPath       = !!assessmentPath;
+    const pathIsMetrics = assessmentPath === "metrics";
+    const pathIsProcess = assessmentPath === "process";
+    return (
+      <PageWrap maxWidth={700}>
+        <div style={{...card, padding:"56px 48px", textAlign:"center", marginTop:40, borderTop:"4px solid #92400e"}}>
+          <div style={{fontSize:40, marginBottom:16}}>📋</div>
+          <div style={{fontFamily:FONT.serif, fontSize:22, fontWeight:700, color:C.text, marginBottom:8}}>
+            No Assessment Data Yet
+          </div>
+          <div style={{fontFamily:FONT.sans, fontSize:14, color:C.textSoft, lineHeight:1.7, marginBottom:28, maxWidth:480, margin:"0 auto 28px"}}>
+            Results require completed assessment data.{" "}
+            {!hasCarrier && "Start by entering your carrier details on the previous step."}
+            {hasCarrier && !hasPath && "Select an assessment path (Metrics or Process) to continue."}
+            {hasCarrier && pathIsMetrics && "Enter at least one metric value on the Metrics Assessment page to generate results."}
+            {hasCarrier && pathIsProcess && "Complete the Process Maturity Assessment to generate results."}
+          </div>
+          <div style={{display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap"}}>
+            <button onClick={onBack} style={{...btnSecondary, borderRadius:6, padding:"10px 22px"}}>
+              <ArrowLeft size={14}/> {pathIsMetrics ? "Back to Metrics" : pathIsProcess ? "Back to Process" : "Go Back"}
+            </button>
+            {onDashboard && (
+              <button onClick={onDashboard} style={{...btnSecondary, borderRadius:6, padding:"10px 22px"}}>
+                ← Back to Hub
+              </button>
+            )}
+            {!hasCarrier && (
+              <button onClick={onBack} style={{...btnPrimary, borderRadius:6, padding:"10px 22px"}}>
+                Enter Carrier Details
+              </button>
+            )}
+          </div>
+          {hasPath && (
+            <div style={{marginTop:24, fontFamily:FONT.sans, fontSize:11, color:C.textMuted}}>
+              Path selected: <strong>{assessmentPath}</strong> · Carrier: <strong>{carrierInfo?.name || "not set"}</strong>
+            </div>
+          )}
+        </div>
+      </PageWrap>
+    );
+  }
 
   // Tabs — show process tab if maturity data exists
   const TABS = [
@@ -862,12 +939,6 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
           <p style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>
             {carrierInfo?.name||assessment?.carrier_name||"Assessment"} · {carrierInfo?.lobs?.join(", ")||"All LOBs"} · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
           </p>
-          {!hasRealData && (
-            <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:5,background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:4,padding:"4px 10px"}}>
-              <Info size={11} color="#92400e"/>
-              <span style={{fontFamily:FONT.sans,fontSize:11,color:"#92400e"}}>Showing sample data — complete Metrics or Process assessment for real scores</span>
-            </div>
-          )}
         </div>
         <div style={{display:"flex",gap:10}} className="no-print">
           <button style={{...btnSecondary,borderRadius:6}} onClick={onBack}><ArrowLeft size={13}/> Back</button>
