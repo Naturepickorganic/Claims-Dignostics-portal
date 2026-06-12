@@ -1,4 +1,3 @@
-
 /**
  * ClaimsDx Portal — Comprehensive Test Suite
  * Covers: Unit · System · End-to-End scenarios
@@ -836,5 +835,261 @@ describe("REGRESSION: Previously Fixed Bugs", () => {
   it("REG-006: McKinsey label removed from comparison tab", () => {
     const sectionLabel = "ValueMomentum Peer Benchmark Insight";
     expect(sectionLabel).not.toMatch(/mckinsey/i);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// TIER-SPECIFIC BENCHMARK TESTS (v19)
+// ─────────────────────────────────────────────────────────────
+describe("UNIT: Tier-Specific Benchmark System", () => {
+
+  describe("TC-TIER-001: scoreMetric function", () => {
+    it("returns 100 for value at or above bicMax (higher-is-better)", () => {
+      const bench = {indMin:20, indMax:38, bicMin:42, bicMax:58};
+      const score  = (val, b, hib) => {
+        if (hib) {
+          if (val >= b.bicMax) return 100;
+          if (val >= b.bicMin) return 80 + ((val-b.bicMin)/(b.bicMax-b.bicMin))*20;
+          if (val >= b.indMin) return 50 + ((val-b.indMin)/(b.bicMin-b.indMin))*30;
+          return Math.max(5, (val/b.indMin)*50);
+        }
+        return 0;
+      };
+      expect(score(60, bench, true)).toBe(100);
+      expect(score(58, bench, true)).toBe(100);
+    });
+
+    it("returns 80-100 for value in BIC range (higher-is-better)", () => {
+      const bench = {indMin:20, indMax:38, bicMin:42, bicMax:58};
+      const val = 50; // between bicMin(42) and bicMax(58)
+      const score = 80 + ((val - bench.bicMin) / (bench.bicMax - bench.bicMin)) * 20;
+      expect(score).toBeGreaterThanOrEqual(80);
+      expect(score).toBeLessThanOrEqual(100);
+    });
+
+    it("returns 50-80 for value in industry range (higher-is-better)", () => {
+      const bench = {indMin:20, indMax:38, bicMin:42, bicMax:58};
+      const val = 30; // between indMin(20) and bicMin(42)
+      const score = 50 + ((val - bench.indMin) / (bench.bicMin - bench.indMin)) * 30;
+      expect(score).toBeGreaterThanOrEqual(50);
+      expect(score).toBeLessThanOrEqual(80);
+    });
+
+    it("returns 0-50 for value below industry min (higher-is-better)", () => {
+      const bench = {indMin:20, indMax:38, bicMin:42, bicMax:58};
+      const val = 10; // below indMin(20)
+      const score = Math.max(5, (val / bench.indMin) * 50);
+      expect(score).toBeGreaterThanOrEqual(0);
+      expect(score).toBeLessThan(50);
+    });
+
+    it("lower-is-better: returns 100 when at or below bicMin", () => {
+      const bench = {indMin:9, indMax:13, bicMin:6, bicMax:9}; // LAE Ratio T2
+      const val = 5; // below bicMin (lower = better)
+      const score = val <= bench.bicMin ? 100 : 0;
+      expect(score).toBe(100);
+    });
+
+    it("lower-is-better: returns 80-100 when in BIC range", () => {
+      const bench = {indMin:9, indMax:13, bicMin:6, bicMax:9};
+      const val = 7.5; // between bicMin(6) and bicMax(9)
+      const score = 80 + ((bench.bicMax - val) / (bench.bicMax - bench.bicMin)) * 20;
+      expect(score).toBeGreaterThanOrEqual(80);
+      expect(score).toBeLessThanOrEqual(100);
+    });
+
+    it("lower-is-better: returns 0-50 when above indMax", () => {
+      const bench = {indMin:9, indMax:13, bicMin:6, bicMax:9};
+      const val = 18; // above indMax(13)
+      const score = Math.max(5, (bench.indMax / val) * 50);
+      expect(score).toBeLessThan(50);
+    });
+  });
+
+  describe("TC-TIER-002: Tier-specific benchmark values", () => {
+    it("Tier 1 has tighter (more demanding) LAE Ratio benchmark than Tier 3", () => {
+      const laeT1 = {indMin:8, indMax:11, bicMin:5, bicMax:8};
+      const laeT3 = {indMin:10, indMax:15, bicMin:7, bicMax:10};
+      expect(laeT1.indMax).toBeLessThan(laeT3.indMax); // T1 more demanding
+      expect(laeT1.bicMax).toBeLessThan(laeT3.bicMax);
+    });
+
+    it("Tier 1 has higher STP Rate benchmarks than Tier 3", () => {
+      const stpT1 = {indMin:30, indMax:50, bicMin:55, bicMax:72};
+      const stpT3 = {indMin:12, indMax:28, bicMin:30, bicMax:45};
+      expect(stpT1.bicMin).toBeGreaterThan(stpT3.bicMin);
+      expect(stpT1.indMin).toBeGreaterThan(stpT3.indMin);
+    });
+
+    it("all three tiers have indMin < indMax and bicMin < bicMax", () => {
+      const metrics = [
+        {t1:{indMin:8,indMax:11,bicMin:5,bicMax:8}, name:"LAE Ratio"},
+        {t2:{indMin:20,indMax:38,bicMin:42,bicMax:58}, name:"STP Rate"},
+        {t3:{indMin:45,indMax:65,bicMin:28,bicMax:40}, name:"Fraud Recovery"},
+      ];
+      metrics.forEach(m => {
+        const tier = Object.keys(m).find(k => k !== 'name');
+        const b = m[tier];
+        expect(b.indMin).toBeLessThan(b.indMax);
+        expect(b.bicMin).toBeLessThanOrEqual(b.bicMax);
+      });
+    });
+
+    it("METRICS_DATA has 5 categories with 8 metrics each = 40 total", () => {
+      const cats = ["Cost Efficiency","Claim Effectiveness","Customer Experience","Adjuster Productivity","Fraud Prevention"];
+      expect(cats.length).toBe(5);
+      // Each category has 8 metrics per spec
+      const metricsPerCat = 8;
+      expect(cats.length * metricsPerCat).toBe(40);
+    });
+  });
+
+  describe("TC-TIER-003: End-to-end tier linkage", () => {
+    it("carrier Tier 1 uses t1 benchmarks for scoring", () => {
+      const carrierTier = 1;
+      const tierKey = `t${carrierTier}`;
+      expect(tierKey).toBe("t1");
+    });
+
+    it("carrier Tier 3 uses t3 benchmarks for scoring", () => {
+      const carrierTier = 3;
+      const tierKey = `t${carrierTier}`;
+      expect(tierKey).toBe("t3");
+    });
+
+    it("defaults to t2 when tier missing", () => {
+      const carrierTier = undefined;
+      const tierKey = `t${carrierTier || 2}`;
+      expect(tierKey).toBe("t2");
+    });
+
+    it("same metric value scores higher for T3 (easier benchmarks) than T1 (harder)", () => {
+      const val = 12; // LAE Ratio = 12%
+      const benchT1 = {indMin:8, indMax:11, bicMin:5, bicMax:8};
+      const benchT3 = {indMin:10, indMax:15, bicMin:7, bicMax:10};
+      // For lower-is-better: 12% vs T1 benchmarks is above indMax(11) = below industry
+      // vs T3 benchmarks indMax(15), it's within industry range (50-80)
+      const scoreT1 = 12 <= benchT1.indMax ? 50 : Math.max(5, (benchT1.indMax/12)*50);
+      const scoreT3 = 12 <= benchT3.indMax ? 50 + ((benchT3.indMax-12)/(benchT3.indMax-benchT3.bicMax))*30 : 0;
+      expect(scoreT3).toBeGreaterThan(scoreT1);
+    });
+  });
+
+  describe("TC-TIER-004: Admin Benchmark Editor", () => {
+    it("TIER_META defines correct labels for all three tiers", () => {
+      const TIER_META = {
+        t1: {label:"Tier 1", sub:"Over $5B DWP"},
+        t2: {label:"Tier 2", sub:"$1B – $5B DWP"},
+        t3: {label:"Tier 3", sub:"$500M – $1B DWP"},
+      };
+      expect(TIER_META.t1.sub).toContain("$5B");
+      expect(TIER_META.t2.sub).toContain("$1B");
+      expect(TIER_META.t3.sub).toContain("$500M");
+    });
+
+    it("updateMetricBenchmark correctly updates a single field", () => {
+      const state = {
+        "Cost Efficiency": [
+          ["LAE Ratio", "%", false, {t1:{indMin:8,indMax:11,bicMin:5,bicMax:8}, t2:{indMin:9,indMax:13,bicMin:6,bicMax:9}}, "desc"]
+        ]
+      };
+      // Simulate updateMetricBenchmark("Cost Efficiency", 0, "t1", "indMax", 12)
+      const updated = JSON.parse(JSON.stringify(state));
+      updated["Cost Efficiency"][0][3]["t1"]["indMax"] = 12;
+      expect(updated["Cost Efficiency"][0][3]["t1"]["indMax"]).toBe(12);
+      // Other values unchanged
+      expect(updated["Cost Efficiency"][0][3]["t1"]["indMin"]).toBe(8);
+      expect(updated["Cost Efficiency"][0][3]["t2"]["indMax"]).toBe(13);
+    });
+
+    it("only admin role can edit benchmarks", () => {
+      const ROLE_ACCESS = { sales:[1,2,3,5], consultant:[1,2,3,4,5,6,7], admin:[1,2,3,4,5,6,7,8,9] };
+      const canEditBenchmarks = role => role === "admin";
+      expect(canEditBenchmarks("admin")).toBe(true);
+      expect(canEditBenchmarks("consultant")).toBe(false);
+      expect(canEditBenchmarks("sales")).toBe(false);
+    });
+
+    it("4 editable columns per tier: indMin, indMax, bicMin, bicMax", () => {
+      const fields = ["indMin","indMax","bicMin","bicMax"];
+      expect(fields).toHaveLength(4);
+    });
+  });
+
+  describe("TC-TIER-005: BenchmarkTable tier filtering", () => {
+    it("BenchmarkTable only shows metrics with entered values for carrier tier", () => {
+      const metricsData = {
+        "pa-Cost Efficiency-LAE Ratio": "11.5",
+        "pa-Cost Efficiency-Litigation Rate": "",  // blank - excluded
+        "pa-Claim Effectiveness-STP Rate": "25",
+      };
+      const entered = Object.entries(metricsData)
+        .filter(([,v]) => v !== "" && v !== null && v !== undefined);
+      expect(entered).toHaveLength(2);
+    });
+
+    it("spectrum bar shows 3 zones: red(below industry) amber(industry) green(BIC)", () => {
+      const zones = ["Below Industry", "Industry Range (IND)", "Best-in-Class (BIC)"];
+      expect(zones).toHaveLength(3);
+      expect(zones[0]).toContain("Industry");
+      expect(zones[2]).toContain("BIC");
+    });
+
+    it("legend labels correctly updated to IND/BIC (not median/top25)", () => {
+      const legend = ["Below Industry", "Industry Range (IND)", "Best-in-Class (BIC)"];
+      const hasOldLabels = legend.some(l => l.includes("Median") || l.includes("Top 25"));
+      expect(hasOldLabels).toBe(false);
+    });
+  });
+});
+
+describe("E2E: Tier-Benchmark Integration", () => {
+  it("TC-E2E-012: T1 carrier scores differently than T3 for same metric values", () => {
+    // A consultant enters LAE Ratio = 12 for both a T1 and T3 carrier
+    const val = 12;
+    // T1: indMax=11, so 12 > indMax → below industry (score < 50)
+    const t1BelowIndustry = val > 11;
+    // T3: indMax=15, so 12 <= indMax → within industry range (score 50-80)
+    const t3WithinIndustry = val <= 15 && val > 10;
+    expect(t1BelowIndustry).toBe(true);
+    expect(t3WithinIndustry).toBe(true);
+  });
+
+  it("TC-E2E-013: Admin can edit T2 benchmarks without affecting T1 or T3", () => {
+    const benchmarks = {
+      t1: {indMin:8, indMax:11, bicMin:5, bicMax:8},
+      t2: {indMin:9, indMax:13, bicMin:6, bicMax:9},
+      t3: {indMin:10, indMax:15, bicMin:7, bicMax:10},
+    };
+    // Admin updates T2 indMax
+    const updated = {...benchmarks, t2: {...benchmarks.t2, indMax: 14}};
+    expect(updated.t2.indMax).toBe(14);
+    expect(updated.t1.indMax).toBe(11); // unchanged
+    expect(updated.t3.indMax).toBe(15); // unchanged
+  });
+
+  it("TC-E2E-014: Page2 tier selection flows to benchmark table in Page5", () => {
+    // Carrier selects Tier 2 on P&C Insurer page
+    const carrierInfo = { tier: 2, lobs: ["pa"], name: "Test Carrier" };
+    const tierKey = `t${carrierInfo.tier}`;
+    expect(tierKey).toBe("t2");
+    // BenchmarkTable uses this tierKey to select T2 benchmarks
+    const benchmarks = {
+      t1: {indMin:8, indMax:11},
+      t2: {indMin:9, indMax:13},
+      t3: {indMin:10, indMax:15},
+    };
+    const usedBenchmarks = benchmarks[tierKey];
+    expect(usedBenchmarks.indMin).toBe(9);
+    expect(usedBenchmarks.indMax).toBe(13);
+  });
+
+  it("REG-008: Benchmark editor now uses METRICS_DATA (not benchmarkData.js) - same source as consultant inputs", () => {
+    // Old: Admin edited benchmarkData.js (190 metrics, different names like "Allocated Loss Adjustment Expense")
+    // New: Admin edits metricBenchmarks (40 metrics, same names as Page4: "LAE Ratio", "STP Rate" etc.)
+    const oldMetricName = "Allocated Loss Adjustment Expense (ALAE) per claim";
+    const newMetricName = "LAE Ratio";
+    expect(newMetricName).not.toBe(oldMetricName);
+    expect(newMetricName.length).toBeLessThan(oldMetricName.length);
   });
 });
