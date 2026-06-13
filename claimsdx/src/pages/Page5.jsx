@@ -629,6 +629,53 @@ function TabOverview({ displayScores }) {
         })}
       </div>
       <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft,fontStyle:"italic"}}>Click any card to expand KPI detail.</div>
+
+      {/* Score Methodology — #11 fix: visible breakdown of how scores are computed */}
+      <div style={{...card,padding:"18px 22px",marginTop:20,borderLeft:"3px solid #1a4731"}}>
+        <div style={{fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text,marginBottom:10}}>
+          How Scores Are Computed
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:14}}>
+          <div>
+            <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:"#1a4731",marginBottom:6}}>Metrics Path Scoring</div>
+            <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft,lineHeight:1.7}}>
+              Each entered KPI is scored 0–100 against LOB-specific and tier-specific benchmarks:<br/>
+              <span style={{color:"#166534",fontWeight:600}}>80–100</span> = Best-in-Class (BIC range)<br/>
+              <span style={{color:"#92400e",fontWeight:600}}>50–80</span> = Within Industry range<br/>
+              <span style={{color:"#991b1b",fontWeight:600}}>0–50</span> = Below Industry<br/>
+              Lens score = average of all KPI scores within that lens.
+            </div>
+          </div>
+          <div>
+            <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:"#1a4731",marginBottom:6}}>Process Maturity Scoring</div>
+            <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft,lineHeight:1.7}}>
+              Each question scored 1–5:<br/>
+              <span style={{color:"#991b1b",fontWeight:600}}>1–2 = Basic</span> — significant gaps vs best-in-class<br/>
+              <span style={{color:"#92400e",fontWeight:600}}>3 = Intermediate</span> — moderate maturity<br/>
+              <span style={{color:"#166534",fontWeight:600}}>4–5 = Best in Class</span> — fully aligned<br/>
+              Converted to 0–100 scale: (score–1)/4 × 80 + 20
+            </div>
+          </div>
+        </div>
+        <div style={{borderTop:"1px solid #d8ebe2",paddingTop:12}}>
+          <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:"#1a4731",marginBottom:6}}>Value Opportunity $ Calculation</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {[
+              ["Tier 1 (>$20B DWP)","$7B midpoint used for $ sizing"],
+              ["Tier 2 ($1–20B DWP)","$2.5B midpoint used for $ sizing"],
+              ["Tier 3 (<$1B DWP)","$750M midpoint used for $ sizing"],
+            ].map(([t,d])=>(
+              <div key={t} style={{background:"#f7faf8",borderRadius:6,padding:"10px 12px"}}>
+                <div style={{fontFamily:FONT.sans,fontSize:11,fontWeight:700,color:"#1a4731"}}>{t}</div>
+                <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginTop:2}}>{d}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginTop:8,fontStyle:"italic"}}>
+            $ opportunities = gap-to-BIC % × DWP midpoint × category leakage factor. Indicative only.
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -931,10 +978,10 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
         <div>
           <div style={{marginBottom:10}}><Tag color="forest">{readOnly?"Historical Results":"Assessment Complete"}</Tag></div>
           <h1 style={{fontFamily:FONT.serif,fontSize:28,fontWeight:700,color:C.text,marginBottom:6}}>
-            {readOnly&&assessment?.carrier_name?assessment.carrier_name+" — ":""}Claims Maturity Results
+            {readOnly&&assessment?.carrier_name?assessment.carrier_name+" — ":""}ClaimsDx Assessment Results
           </h1>
           <p style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>
-            {carrierInfo?.name||assessment?.carrier_name||"Assessment"} · {carrierInfo?.lobs?.join(", ")||"All LOBs"} · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
+            {carrierInfo?.name||assessment?.carrier_name||"Assessment"} · {carrierInfo?.lobs?.map(l=>({pa:"Personal Auto",ph:"Personal Home",ca:"Comm. Auto",cp:"Comm. Property",wc:"Workers Comp",gl:"Gen. Liability",bop:"BOP/BIP"}[l]||l)).join(", ")||"All LOBs"} · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
           </p>
         </div>
         <div style={{display:"flex",gap:10}} className="no-print">
