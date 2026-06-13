@@ -1,4 +1,5 @@
-import { ChevronRight, TrendingUp, TrendingDown, Settings, LogOut } from "lucide-react";
+import { useState } from "react";
+import { ChevronRight, TrendingUp, TrendingDown, Settings, LogOut, HelpCircle, X, Send } from "lucide-react";
 import { C, FONT, LENS_COLORS } from "./constants.js";
 
 // ─── VM Logo mark ─────────────────────────────────────────────────────────────
@@ -58,12 +59,119 @@ export function Tag({ children, color = "green" }) {
 // ─── Navigation ───────────────────────────────────────────────────────────────
 const ROLE_COLORS = { sales: "#9f1239", consultant: "#1a4731", admin: "#0f766e" };
 
+// ─── Support Button + Modal (#17) ─────────────────────────────────────────────
+// Allows consultants/admins to submit queries to Claims Vertical Group
+function SupportButton() {
+  const [open, setOpen]       = useState(false);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [sent, setSent]       = useState(false);
+
+  const handleSend = () => {
+    const to      = "claims.vertical@valuemomentum.com";
+    const sub     = encodeURIComponent(subject || "ClaimsDx Portal Query");
+    const body    = encodeURIComponent(message || "");
+    window.open(`mailto:${to}?subject=${sub}&body=${body}`, "_blank");
+    setSent(true);
+    setTimeout(() => { setOpen(false); setSent(false); setSubject(""); setMessage(""); }, 2000);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        title="Contact Claims Vertical Group"
+        style={{
+          padding: "5px 10px", borderRadius: 5, border: "1px solid #d8ebe2",
+          background: "white", color: C.textSoft, cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 5,
+          fontSize: 12, fontFamily: FONT.sans,
+        }}
+      >
+        <HelpCircle size={14} /> Support
+      </button>
+
+      {open && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(0,0,0,0.4)", display: "flex",
+          alignItems: "center", justifyContent: "center",
+        }} onClick={() => setOpen(false)}>
+          <div style={{
+            background: "white", borderRadius: 12, padding: "28px 32px",
+            width: 420, boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+            borderTop: "4px solid #1a4731",
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+              <div>
+                <div style={{ fontFamily: FONT.serif, fontSize: 18, fontWeight: 700, color: "#1a4731", marginBottom: 3 }}>
+                  Contact Claims Vertical Group
+                </div>
+                <div style={{ fontFamily: FONT.sans, fontSize: 12, color: C.textSoft }}>
+                  Submit a query or feedback — we'll respond via email.
+                </div>
+              </div>
+              <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: C.textMuted }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: FONT.sans, fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>Subject</div>
+              <input
+                value={subject}
+                onChange={e => setSubject(e.target.value)}
+                placeholder="e.g. Question about benchmark data"
+                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d8ebe2", borderRadius: 6, fontFamily: FONT.sans, fontSize: 13, outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: FONT.sans, fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>Message</div>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder="Describe your query or feedback in detail…"
+                rows={4}
+                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d8ebe2", borderRadius: 6, fontFamily: FONT.sans, fontSize: 13, outline: "none", boxSizing: "border-box", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button onClick={() => setOpen(false)} style={{ padding: "8px 16px", borderRadius: 6, border: "1px solid #d8ebe2", background: "white", color: C.textSoft, fontSize: 13, cursor: "pointer", fontFamily: FONT.sans }}>
+                Cancel
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={!message.trim()}
+                style={{
+                  padding: "8px 18px", borderRadius: 6, border: "none",
+                  background: sent ? "#166534" : (message.trim() ? "#1a4731" : "#94a3b8"),
+                  color: "white", fontSize: 13, cursor: message.trim() ? "pointer" : "not-allowed",
+                  fontFamily: FONT.sans, fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <Send size={13} /> {sent ? "Opening email…" : "Send via Email"}
+              </button>
+            </div>
+            <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textMuted, marginTop: 10, textAlign: "center" }}>
+              Opens your email client to claims.vertical@valuemomentum.com
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Nav ───────────────────────────────────────────────────────────────────────
 export function Nav({ page, setPage, role, profile, onAdmin, onLogout, onDashboard }) {
   const visibleSteps = role === "sales"
-    ? [{ label: "Welcome", p: 1 }, { label: "P&C Insurer", p: 2 }, { label: "Results", p: 5 }]
+    ? [{ label: "Welcome", p: 1 }, { label: "Carrier Info", p: 2 }, { label: "Results", p: 5 }]
     : [
         { label: "Welcome",    p: 1 },
-        { label: "P&C Insurer", p: 2 },
+        { label: "Carrier",    p: 2 },
         { label: "Path",       p: 3 },
         { label: "Metrics",    p: 4 },
         { label: "Results",    p: 5 },
@@ -165,6 +273,9 @@ export function Nav({ page, setPage, role, profile, onAdmin, onLogout, onDashboa
               <Settings size={14} />
             </button>
           )}
+
+          {/* Support button — contact Claims Vertical Group (#17 fix) */}
+          <SupportButton />
 
           {/* Log out */}
           {onLogout && (
