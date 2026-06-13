@@ -324,24 +324,43 @@ export async function saveQuestionResponses(userId, assessmentId, carrierId, mat
   return { error };
 }
 
-// ── Benchmark overrides ───────────────────────────────────────────────────────
-export async function saveBenchmarkOverrides(userId, lob, overrides) {
-  if (!SUPABASE_ENABLED) return { error: null };
-  const { error } = await supabase
-    .from("benchmark_overrides")
-    .upsert({ user_id: userId, lob, overrides, updated_at: new Date().toISOString() },
-             { onConflict: "user_id,lob" });
-  return { error };
-}
+// ── Benchmark overrides (row-level: one row per lob + metric_name + tier) ────
+// Key format in-memory: "{lob}:{metricName}:{tier}" → {indMin, indMax, bicMin, bicMax}
 
-export async function loadBenchmarkOverrides(userId) {
+export async function loadBenchmarkOverrides() {
   if (!SUPABASE_ENABLED) return { overrides: {}, error: null };
   const { data, error } = await supabase
     .from("benchmark_overrides")
-    .select("lob, overrides")
-    .eq("user_id", userId);
+    .select("lob, metric_name, tier, ind_min, ind_max, bic_min, bic_max");
   if (error || !data) return { overrides: {}, error };
-  const merged = {};
-  data.forEach(r => { merged[r.lob] = r.overrides; });
-  return { overrides: merged, error: null };
+  const overrides = {};
+  for (const row of data) {
+    const key = `${row.lob}:${row.metric_name}:${row.tier}`;
+    overrides[key] = {
+      indMin: row.ind_min,
+      indMax: row.ind_max,
+      bicMin: row.bic_min,
+      bicMax: row.bic_max,
+    };
+  }
+  return { overrides, error: null };
+}
+
+export async function saveBenchmarkOverride(lob, metricName, tier, bench) {
+  if (!SUPABASE_ENABLED) return { error: null };
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from("benchmark_overrides")
+    .upsert({
+      lob,
+      metric_name: metricName,
+      tier:        parseInt(tier),
+      ind_min:     bench.indMin ?? null,
+      ind_max:     bench.indMax ?? null,
+      bic_min:     bench.bicMin ?? null,
+      bic_max:     bench.bicMax ?? null,
+      updated_by:  user?.id,
+      updated_at:  new Date().toISOString(),
+    }, { onConflict: "lob,metric_name,tier" });
+  return { error };
 }
