@@ -40,10 +40,19 @@ function fmt(v) {
 function SaveToast({ show }) {
   if (!show) return null;
   return (
-    <div style={{ position:"fixed",bottom:80,right:24,zIndex:999,background:"#1a4731",color:"white",
-      borderRadius:8,padding:"10px 18px",fontSize:12,fontFamily:FONT.sans,
-      display:"flex",alignItems:"center",gap:8,boxShadow:"0 4px 16px rgba(0,0,0,0.18)" }}>
-      <CheckCircle2 size={14}/> Progress auto-saved
+    <div style={{
+      position:"fixed", bottom:80, right:24, zIndex:999,
+      background:"#1a4731", color:"white", borderRadius:8,
+      padding:"12px 18px", fontSize:12, fontFamily:FONT.sans,
+      display:"flex", flexDirection:"column", gap:3,
+      boxShadow:"0 4px 16px rgba(0,0,0,0.18)", maxWidth:260,
+    }}>
+      <div style={{display:"flex",alignItems:"center",gap:7,fontWeight:700}}>
+        <CheckCircle2 size={14}/> Progress saved
+      </div>
+      <div style={{fontSize:11,opacity:0.85}}>
+        Resume this assessment any time from your Dashboard.
+      </div>
     </div>
   );
 }
@@ -169,8 +178,9 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
           </span>
         )}
         <button onClick={() => triggerSave(values)}
+          title="Save your progress — you can resume from the Dashboard where you left off"
           style={{...btnSecondary,padding:"5px 12px",fontSize:11,borderRadius:5,display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
-          <Save size={11}/> Save
+          <Save size={11}/> Save Progress
         </button>
       </div>
 
