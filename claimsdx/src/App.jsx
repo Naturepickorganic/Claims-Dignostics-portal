@@ -256,6 +256,7 @@ export default function App() {
           onDataChange={(vals)=>{ setMetricsData(vals); }}
           onSave={(vals)=>saveProgress({ page:4, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData:vals })}
           carrierLobs={carrierInfo?.lobs || []}
+          carrierTier={carrierInfo?.tier || 2}
         />}
       {page===5 && canAccess(5) && (
         <Page5
