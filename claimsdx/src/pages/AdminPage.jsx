@@ -10,6 +10,11 @@ import { LOB_OPTIONS } from "../benchmarkData.js";
 import { MOCK_ASSESSMENTS, getMockStats, getLensAverages, LENS_LABELS, LENS_KEYS } from "../mockData.js";
 import { listAllAssessments } from "../lib/progressDB.js";
 
+import { BENCHMARK_DATA } from "../benchmarkData.js";
+import {
+  BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_LABEL, BENCH_LOB_SHORT,
+  isHigherBetter, getBenchForTier,
+} from "../benchmarkHelpers.js";
 // ── Shared constants ─────────────────────────────────────────
 const MATURITY_COLOR = { Leading:"#166534", Advanced:"#1a4731", Developing:"#92400e", Foundational:"#991b1b" };
 const MATURITY_BG    = { Leading:"#f0f7f3", Advanced:"#f0f7f3", Developing:"#fef3c7", Foundational:"#fee2e2" };
@@ -588,112 +593,152 @@ function TabComparison({ assessments }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 4 — Benchmark Editor (tier-specific, uses METRICS_DATA)
+// TAB 4 — Benchmark Editor (LOB + Tier tabs, from benchmarkData.js)
 // ═══════════════════════════════════════════════════════════════
-const TIER_META = {
-  t1: { label:"Tier 1", sub:"Over $5B DWP",    color:"#1a4731", bg:"#f0f7f3" },
-  t2: { label:"Tier 2", sub:"$1B – $5B DWP",   color:"#1e3a5f", bg:"#eff6ff" },
-  t3: { label:"Tier 3", sub:"$500M – $1B DWP", color:"#92400e", bg:"#fef3c7" },
+const BENCH_LOBS = [
+  { key:"personal_lines",       label:"Personal Lines" },
+  { key:"commercial_lines",     label:"Commercial Lines" },
+  { key:"workers_compensation", label:"Workers Comp" },
+  { key:"general_liability",    label:"General Liability" },
+];
+const TIER_META2 = {
+  1: { label:"Tier 1", sub:"Over $5B DWP",    color:"#1a4731", bg:"#f0f7f3" },
+  2: { label:"Tier 2", sub:"$1B – $5B DWP",   color:"#1e3a5f", bg:"#eff6ff" },
+  3: { label:"Tier 3", sub:"$500M – $1B DWP", color:"#92400e", bg:"#fef3c7" },
 };
 
 function TabBenchmarks() {
-  const { metricBenchmarks, updateMetricBenchmark } = useApp();
-  const [activeTier, setActiveTier]   = useState("t2");
+  const { benchmarkOverrides, updateBenchmarkOverride } = useApp();
+  const [activeLob,  setActiveLob]  = useState("personal_lines");
+  const [activeTier, setActiveTier] = useState(2);
   const [expandedCat, setExpandedCat] = useState(null);
-  const [saved, setSaved]             = useState(false);
-  const cats = Object.keys(metricBenchmarks);
-  const tm   = TIER_META[activeTier];
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const tm = TIER_META2[activeTier];
+  const metrics = BENCHMARK_DATA[activeLob] || [];
+  const cats = [...new Set(metrics.map(m => m.category))];
+  const totalCount = metrics.length;
+
+  const handleSave = async () => {
+    setSaving(true);
+    // saveBenchmarkOverride is called per-edit in updateBenchmarkOverride
+    // This button just gives visual confirmation
+    setSaved(true);
+    setSaving(false);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const fmt = v => v == null ? "" : (v >= 1000 ? (v/1000).toFixed(1)+"K" : v%1===0?String(v):v.toFixed(2));
 
   return (
     <div>
-      {/* Tier selector + Save */}
+      {/* LOB + Tier selectors */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
-        <div style={{display:"flex",gap:8}}>
-          {["t1","t2","t3"].map(t=>{
-            const tm2=TIER_META[t];
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {BENCH_LOBS.map(l => (
+            <button key={l.key} onClick={() => { setActiveLob(l.key); setExpandedCat(null); }} style={{
+              padding:"8px 16px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+              fontWeight:activeLob===l.key?700:400,
+              border:"1px solid "+(activeLob===l.key?"#1a4731":"#d8ebe2"),
+              background:activeLob===l.key?"#1a4731":"white",
+              color:activeLob===l.key?"white":C.textSoft,
+            }}>{l.label}</button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          {[1,2,3].map(t => {
+            const tm2 = TIER_META2[t];
             return (
-              <button key={t} onClick={()=>setActiveTier(t)} style={{
-                padding:"10px 20px",borderRadius:6,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+              <button key={t} onClick={() => setActiveTier(t)} style={{
+                padding:"7px 14px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+                fontWeight:activeTier===t?700:400,
                 border:"1.5px solid "+(activeTier===t?tm2.color:"#d8ebe2"),
                 background:activeTier===t?tm2.color:"white",
                 color:activeTier===t?"white":C.textSoft,
-                display:"flex",flexDirection:"column",alignItems:"center",gap:1,
+                display:"flex",flexDirection:"column",alignItems:"center",
               }}>
-                <span style={{fontWeight:700}}>{tm2.label}</span>
-                <span style={{fontSize:10,opacity:0.85}}>{tm2.sub}</span>
+                <span style={{fontWeight:700,fontSize:11}}>{tm2.label}</span>
+                <span style={{fontSize:9,opacity:0.8}}>{tm2.sub}</span>
               </button>
             );
           })}
+          <button onClick={handleSave} style={{
+            ...btnPrimary,borderRadius:5,padding:"8px 18px",fontSize:12,
+            background:saved?"#166534":"#1a4731",
+          }}>
+            {saving?"Saving…":saved?"✓ Saved":"Save Changes"}
+          </button>
         </div>
-        <button onClick={()=>{setSaved(true);setTimeout(()=>setSaved(false),2500);}}
-          style={{...btnPrimary,borderRadius:6,padding:"10px 22px",fontSize:13,background:saved?"#166534":"#1a4731"}}>
-          {saved?"✓ Changes Saved":"Save Changes"}
-        </button>
       </div>
 
-      {/* Active tier banner */}
-      <div style={{...card,padding:"12px 18px",marginBottom:16,background:tm.bg,borderLeft:"4px solid "+tm.color,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontFamily:FONT.sans,fontSize:13,fontWeight:700,color:tm.color}}>
-          {tm.label} — {tm.sub}
-          <span style={{fontWeight:400,color:C.textSoft,marginLeft:10,fontSize:12}}>
-            IND MIN/MAX = industry standard · BIC MIN/MAX = best-in-class
-          </span>
+      {/* Context banner */}
+      <div style={{...card,padding:"11px 18px",marginBottom:14,background:tm.bg,borderLeft:"4px solid "+tm.color,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:tm.color}}>
+          {BENCH_LOB_LABEL[activeLob]} · {tm.label} — {tm.sub}
+          <span style={{fontWeight:400,color:C.textSoft,marginLeft:8}}>IND = industry range · BIC = best-in-class</span>
         </span>
-        <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted}}>
-          {cats.reduce((s,c)=>s+(metricBenchmarks[c]||[]).length,0)} metrics · admin editable
-        </span>
+        <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted}}>{totalCount} metrics · admin editable</span>
       </div>
 
-      {cats.map(cat=>{
-        const metrics=metricBenchmarks[cat]||[];
-        const isOpen=expandedCat===cat;
+      {cats.map(cat => {
+        const catMetrics = metrics.filter(m => m.category === cat);
+        const isOpen = expandedCat === cat;
         return (
           <div key={cat} style={{...card,overflow:"hidden",marginBottom:10}}>
-            <button onClick={()=>setExpandedCat(isOpen?null:cat)}
-              style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",
-                padding:"14px 20px",background:"#f7faf8",border:"none",cursor:"pointer",
-                borderBottom:isOpen?"1px solid #d8ebe2":"none"}}>
+            <button onClick={() => setExpandedCat(isOpen ? null : cat)} style={{
+              width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"13px 20px",background:"#f7faf8",border:"none",cursor:"pointer",
+              borderBottom:isOpen?"1px solid #d8ebe2":"none",
+            }}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text}}>{cat}</span>
-                <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,background:"#e8f2ec",
-                  padding:"2px 7px",borderRadius:3}}>{metrics.length} metrics</span>
+                <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,background:"#e8f2ec",padding:"2px 7px",borderRadius:3}}>{catMetrics.length} metrics</span>
               </div>
-              <ChevronDown size={14} color={C.textMuted}
-                style={{transform:isOpen?"rotate(0)":"rotate(-90deg)",transition:"transform 0.15s"}}/>
+              <ChevronDown size={14} color={C.textMuted} style={{transform:isOpen?"rotate(0)":"rotate(-90deg)",transition:"0.15s"}}/>
             </button>
 
-            {isOpen&&(
+            {isOpen && (
               <div>
-                <div style={{display:"grid",gridTemplateColumns:"1.8fr 58px 52px 1fr 1fr 1fr 1fr",
-                  gap:8,padding:"9px 20px",background:"#f7faf8",borderBottom:"1px solid #d8ebe2"}}>
-                  {[["Metric","left"],["Unit","center"],["Dir","center"],
-                    ["IND MIN","center"],["IND MAX","center"],["BIC MIN","center"],["BIC MAX","center"]].map(([h,align])=>(
-                    <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,
-                      color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",textAlign:align}}>{h}</div>
+                {/* Column headers */}
+                <div style={{display:"grid",gridTemplateColumns:"2fr 60px 52px 1fr 1fr 1fr 1fr",gap:8,padding:"9px 20px",background:"#f7faf8",borderBottom:"1px solid #d8ebe2"}}>
+                  {[["Metric","left"],["Unit","center"],["Dir","center"],["IND MIN","center"],["IND MAX","center"],["BIC MIN","center"],["BIC MAX","center"]].map(([h,align]) => (
+                    <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",textAlign:align}}>{h}</div>
                   ))}
                 </div>
 
-                {metrics.map(([name,unit,hib,tierData,desc],mi)=>{
-                  const bench=tierData[activeTier]||{indMin:"",indMax:"",bicMin:"",bicMax:""};
+                {catMetrics.map((m, mi) => {
+                  const hib       = isHigherBetter(m);
+                  const defBench  = getBenchForTier(m, activeTier);
+                  const overKey   = `${activeLob}:${m.metric}:${activeTier}`;
+                  const override  = benchmarkOverrides?.[overKey];
+                  const bench     = override || defBench;
+
+                  const handleChange = (field, val) => {
+                    updateBenchmarkOverride(activeLob, m.metric, activeTier, field, val);
+                  };
+
                   return (
-                    <div key={name+mi} style={{display:"grid",gridTemplateColumns:"1.8fr 58px 52px 1fr 1fr 1fr 1fr",
-                      gap:8,padding:"11px 20px",borderBottom:mi<metrics.length-1?"1px solid #edf5f0":"none",
-                      alignItems:"center",background:mi%2===0?"white":"#fafcfa"}}>
+                    <div key={m.metric} style={{
+                      display:"grid",gridTemplateColumns:"2fr 60px 52px 1fr 1fr 1fr 1fr",gap:8,
+                      padding:"11px 20px",borderBottom:mi<catMetrics.length-1?"1px solid #edf5f0":"none",
+                      alignItems:"center",background:mi%2===0?"white":"#fafcfa",
+                    }}>
                       <div>
-                        <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid}}>{name}</div>
-                        <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,marginTop:1}}>{desc}</div>
+                        <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid}}>{m.metric}</div>
+                        {override && <div style={{fontSize:9,color:"#92400e",fontFamily:FONT.sans,marginTop:1}}>⚠ Custom override</div>}
                       </div>
-                      <div style={{fontFamily:FONT.mono,fontSize:11,color:C.textSoft,textAlign:"center"}}>{unit}</div>
+                      <div style={{fontFamily:FONT.mono,fontSize:11,color:C.textSoft,textAlign:"center"}}>{m.units}</div>
                       <div style={{textAlign:"center"}}>
                         <span style={{fontSize:10,fontWeight:700,padding:"2px 5px",borderRadius:3,
                           color:hib?"#166534":"#1e3a5f",background:hib?"#f0f7f3":"#eff6ff"}}>
                           {hib?"↑ Hi":"↓ Lo"}
                         </span>
                       </div>
-                      {["indMin","indMax","bicMin","bicMax"].map((field,fi)=>(
+                      {["indMin","indMax","bicMin","bicMax"].map((field, fi) => (
                         <input key={field} type="number" step="any"
-                          defaultValue={bench[field]!==undefined?bench[field]:""}
-                          onChange={e=>updateMetricBenchmark(cat,mi,activeTier,field,e.target.value)}
+                          defaultValue={bench[field] !== undefined ? bench[field] : ""}
+                          onChange={e => handleChange(field, e.target.value)}
                           style={{
                             padding:"6px 8px",width:"100%",boxSizing:"border-box",
                             border:"1.5px solid "+(fi>=2?"#c3ddd0":"#d8ebe2"),borderRadius:5,
