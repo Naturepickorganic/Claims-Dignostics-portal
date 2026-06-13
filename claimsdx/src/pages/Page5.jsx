@@ -1,8 +1,14 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, Download, RotateCcw, CheckCircle2, AlertCircle, Info } from "lucide-react";
-import { C, FONT, btnPrimary, btnSecondary, card, SAMPLE_SCORES, LENS_COLORS, METRICS_DATA } from "../constants.js";
+import { C, FONT, btnPrimary, btnSecondary, card, SAMPLE_SCORES, LENS_COLORS } from "../constants.js";
 import { Tag, ScoreRing, GapBadge, PageWrap } from "../components.jsx";
 import { useApp } from "../AppContext.jsx";
+import { BENCHMARK_DATA } from "../benchmarkData.js";
+import {
+  BENCH_CAT_TO_LENS, BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_SHORT,
+  getUniqueBenchKeys, getMetricsForLob, isHigherBetter,
+  getBenchForTier, makeMetricKey, computeLensScores,
+} from "../benchmarkHelpers.js";
 
 // ─── Constants ────────────────────────────────────────────────
 const KPI_COLOR = { green:"#166534", amber:"#92400e", red:"#991b1b" };
@@ -84,64 +90,9 @@ function calcValueOpportunities(lensScores, tier=2) {
 }
 
 // ─── Compute scores from metrics data (metrics path) ──────────
-// ─── Tier-aware scoring from metrics input ────────────────────
-// Uses indMin/indMax/bicMin/bicMax per tier for accurate scoring
-// Score bands: 80-100 = BIC zone, 50-80 = industry zone, 0-50 = below industry
-function scoreMetric(val, tierBench, higherIsBetter) {
-  const { indMin, indMax, bicMin, bicMax } = tierBench;
-  let score;
-  if (higherIsBetter) {
-    // Higher is better: bicMin+ = green (80-100), indMin..bicMin = amber (50-80), <indMin = red (0-50)
-    if (val >= bicMax)  return 100;
-    if (val >= bicMin)  score = 80 + ((val - bicMin) / Math.max(0.001, bicMax - bicMin)) * 20;
-    else if (val >= indMin) score = 50 + ((val - indMin) / Math.max(0.001, bicMin - indMin)) * 30;
-    else score = Math.max(5, (val / Math.max(0.001, indMin)) * 50);
-  } else {
-    // Lower is better: <=bicMax = green (80-100), bicMax..indMax = amber (50-80), >indMax = red (0-50)
-    if (val <= bicMin)  return 100;
-    if (val <= bicMax)  score = 80 + ((bicMax - val) / Math.max(0.001, bicMax - bicMin)) * 20;
-    else if (val <= indMax) score = 50 + ((indMax - val) / Math.max(0.001, indMax - bicMax)) * 30;
-    else score = Math.max(5, (indMax / Math.max(0.001, val)) * 50);
-  }
-  return Math.min(100, Math.max(0, Math.round(score)));
-}
-
-function computeScoresFromMetrics(metricsData, carrierInfo, metricBenchmarks) {
-  const LENS_KEYS = ["process_efficiency","financial_leakage","quality_compliance","technology","org_performance"];
-  const lensAccum = {};
-  LENS_KEYS.forEach(k => { lensAccum[k] = { total:0, count:0 }; });
-
-  const tier  = `t${carrierInfo?.tier || 2}`;
-  const lobs  = carrierInfo?.lobs?.length > 0 ? carrierInfo.lobs : ["pa"];
-  const bmData = metricBenchmarks || METRICS_DATA; // fall back to constants if not in context
-
-  Object.keys(METRICS_DATA).forEach(cat => {
-    const lensKey = CAT_TO_LENS[cat];
-    if (!lensKey) return;
-    const metrics = bmData[cat] || METRICS_DATA[cat] || [];
-    metrics.forEach(([name, unit, higherIsBetter, tierData]) => {
-      const tierBench = tierData?.[tier] || tierData?.t2;
-      if (!tierBench) return;
-      lobs.forEach(lob => {
-        const key = `${lob}-${cat}-${name}`;
-        const raw = metricsData?.[key];
-        if (!raw || raw === "") return;
-        const val = parseFloat(raw);
-        if (isNaN(val)) return;
-        const score = scoreMetric(val, tierBench, higherIsBetter);
-        lensAccum[lensKey].total += score;
-        lensAccum[lensKey].count++;
-      });
-    });
-  });
-
-  const lensScores = {};
-  LENS_KEYS.forEach(k => {
-    lensScores[k] = lensAccum[k].count > 0
-      ? Math.round(lensAccum[k].total / lensAccum[k].count)
-      : null;
-  });
-  return lensScores;
+// ─── Tier-aware scoring — delegates to benchmarkHelpers ──────
+function computeScoresFromMetrics(metricsData, carrierInfo, benchmarkOverrides) {
+  return computeLensScores(metricsData, carrierInfo, benchmarkOverrides || {});
 }
 
 // ─── Compute scores from maturity questionnaire (process path) ─
@@ -334,106 +285,119 @@ function MetricSpectrumRow({ name, unit, higherIsBetter, indMin, indMax, bicMin,
     </div>
   );
 }
-// BenchmarkTable — uses metricBenchmarks (from AppContext, admin-editable)
-// Keys match Page4 exactly: "{lobId}-{category}-{metricName}"
-// Shows ONLY rows where user entered a value — filtered by carrier tier
+// BenchmarkTable — uses benchmarkData (Excel source), LOB+tier specific
+// Shows only rows the consultant actually entered — blank rows hidden
 function BenchmarkTable({ carrierLobs, carrierTier, metricsData }) {
-  const { metricBenchmarks } = useApp();
-  const ALL_CATS = ["Cost Efficiency","Claim Effectiveness","Customer Experience","Adjuster Productivity","Fraud Prevention"];
-  const lobs     = carrierLobs?.length > 0 ? carrierLobs : ["pa"];
-  const tierKey  = `t${carrierTier || 2}`;
-  const [activeCat, setActiveCat] = useState("all");
+  const { benchmarkOverrides } = useApp();
+  const benchKeys = getUniqueBenchKeys(carrierLobs);
+  const [activeLobKey, setActiveLobKey] = useState(benchKeys[0] || "personal_lines");
+  const [activeCat,    setActiveCat]    = useState("all");
 
-  // Build flat list of only entered rows, with tier-specific benchmarks
+  // Build flat list of entered rows for active LOB
   const enteredRows = useMemo(() => {
     const rows = [];
-    for (const cat of ALL_CATS) {
-      const metrics = metricBenchmarks[cat] || [];
-      for (const [name, unit, higherIsBetter, tierData, desc] of metrics) {
-        const tierBench = tierData[tierKey] || tierData.t2;
-        for (const lob of lobs) {
-          const key = `${lob}-${cat}-${name}`;
-          const val = metricsData?.[key];
-          if (val !== undefined && val !== "" && val !== null) {
-            rows.push({ lob, cat, name, unit, higherIsBetter, ...tierBench, desc, val, key });
-            break; // one entry per metric (first lob with value)
-          }
-        }
-      }
+    const metrics = getMetricsForLob(activeLobKey);
+    for (const m of metrics) {
+      const key = makeMetricKey(activeLobKey, m.metric);
+      const val = metricsData?.[key];
+      if (!val || val === "") continue;
+      const overKey = `${activeLobKey}:${m.metric}:${carrierTier}`;
+      const bench   = benchmarkOverrides?.[overKey] || getBenchForTier(m, carrierTier);
+      const hib     = isHigherBetter(m);
+      rows.push({ ...m, key, val, bench, hib });
     }
     return rows;
-  }, [metricsData, metricBenchmarks, JSON.stringify(lobs), tierKey]);
+  }, [metricsData, benchmarkOverrides, activeLobKey, carrierTier]);
 
-  const filledCats = [...new Set(enteredRows.map(r => r.cat))];
-  const visible    = activeCat === "all" ? enteredRows : enteredRows.filter(r => r.cat === activeCat);
+  const filledCats = [...new Set(enteredRows.map(r => r.category))];
+  const visible    = activeCat === "all" ? enteredRows : enteredRows.filter(r => r.category === activeCat);
 
-  if (enteredRows.length === 0) {
-    return (
-      <div style={{...card,padding:"48px",textAlign:"center"}}>
-        <div style={{fontSize:32,marginBottom:12}}>📊</div>
-        <div style={{fontFamily:FONT.serif,fontSize:16,fontWeight:700,color:C.text,marginBottom:8}}>No metrics entered yet</div>
-        <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>
-          Complete the Metrics Assessment to see your values benchmarked here.<br/>
-          Only metrics you filled in will appear — blank rows are hidden.
-        </div>
-      </div>
-    );
-  }
+  const TIER_LBL = { 1:"Tier 1 (>$5B DWP)", 2:"Tier 2 ($1–5B DWP)", 3:"Tier 3 ($500M–$1B)" };
 
-  const TIER_LABELS = { t1:"Tier 1 (>$5B DWP)", t2:"Tier 2 ($1B–$5B)", t3:"Tier 3 ($500M–$1B)" };
+  if (!enteredRows.length && !benchKeys.length) return (
+    <div style={{...card,padding:"48px",textAlign:"center"}}>
+      <div style={{fontSize:32,marginBottom:12}}>📊</div>
+      <div style={{fontFamily:FONT.serif,fontSize:16,fontWeight:700,color:C.text,marginBottom:8}}>No metrics entered yet</div>
+      <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>Complete the Metrics Assessment to see your values benchmarked here.</div>
+    </div>
+  );
 
   return (
     <div>
+      {/* LOB tabs (only carrier's LOBs) */}
+      {benchKeys.length > 1 && (
+        <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+          {benchKeys.map(lk => (
+            <button key={lk} onClick={() => { setActiveLobKey(lk); setActiveCat("all"); }}
+              style={{
+                padding:"6px 14px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+                fontWeight:activeLobKey===lk?700:400,
+                border:"1px solid "+(activeLobKey===lk?"#1a4731":"#d8ebe2"),
+                background:activeLobKey===lk?"#1a4731":"white",
+                color:activeLobKey===lk?"white":C.textSoft,
+              }}>{BENCH_LOB_SHORT[lk]}</button>
+          ))}
+        </div>
+      )}
+
+      {/* Category filter */}
       <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-        <button onClick={()=>setActiveCat("all")} style={{padding:"5px 12px",borderRadius:5,fontSize:11,
-          fontWeight:activeCat==="all"?700:400,border:"1px solid "+(activeCat==="all"?"#1a4731":"#d8ebe2"),
-          background:activeCat==="all"?"#1a4731":"white",color:activeCat==="all"?"white":C.textSoft,cursor:"pointer"}}>
-          All ({enteredRows.length})
-        </button>
-        {filledCats.map(c=>(
-          <button key={c} onClick={()=>setActiveCat(c===activeCat?"all":c)} style={{padding:"5px 12px",borderRadius:5,fontSize:11,
-            fontWeight:activeCat===c?700:400,border:"1px solid "+(activeCat===c?"#1a4731":"#d8ebe2"),
-            background:activeCat===c?"#1a4731":"white",color:activeCat===c?"white":C.textSoft,cursor:"pointer"}}>
-            {c} ({enteredRows.filter(r=>r.cat===c).length})
-          </button>
+        <button onClick={() => setActiveCat("all")} style={{
+          padding:"5px 12px",borderRadius:5,fontSize:11,cursor:"pointer",
+          fontWeight:activeCat==="all"?700:400,
+          border:"1px solid "+(activeCat==="all"?"#1a4731":"#d8ebe2"),
+          background:activeCat==="all"?"#1a4731":"white",color:activeCat==="all"?"white":C.textSoft,
+        }}>All ({enteredRows.length})</button>
+        {filledCats.map(c => (
+          <button key={c} onClick={() => setActiveCat(c===activeCat?"all":c)} style={{
+            padding:"5px 12px",borderRadius:5,fontSize:11,cursor:"pointer",
+            fontWeight:activeCat===c?700:400,
+            border:"1px solid "+(activeCat===c?"#1a4731":"#d8ebe2"),
+            background:activeCat===c?"#1a4731":"white",color:activeCat===c?"white":C.textSoft,
+          }}>{BENCH_CAT_SHORT[c]} ({enteredRows.filter(r=>r.category===c).length})</button>
         ))}
         <span style={{marginLeft:"auto",fontSize:11,fontFamily:FONT.sans,color:"#1a4731",fontWeight:600}}>
-          {enteredRows.length} metrics · {TIER_LABELS[tierKey]} benchmarks
+          {BENCH_LOB_SHORT[activeLobKey]} · {TIER_LBL[carrierTier]}
         </span>
       </div>
 
       {/* Legend */}
       <div style={{...card,padding:"10px 16px",marginBottom:14,display:"flex",gap:20,flexWrap:"wrap",alignItems:"center"}}>
-        {[["#fecaca","#991b1b","Below Industry"],["#fde68a","#92400e","Industry Range (IND)"],["#86efac","#166534","Best-in-Class (BIC)"]].map(([bg,clr,lbl])=>(
+        {[["#fecaca","#991b1b","Below Industry"],["#fde68a","#92400e","Industry Range (IND)"],["#86efac","#166534","Best-in-Class (BIC)"]].map(([bg,clr,lbl]) => (
           <div key={lbl} style={{display:"flex",alignItems:"center",gap:5}}>
             <div style={{width:14,height:8,borderRadius:2,background:bg,border:"1px solid "+clr+"55"}}/>
             <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textSoft}}>{lbl}</span>
           </div>
         ))}
-        <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,fontStyle:"italic",marginLeft:"auto"}}>
-          ▲ You = your value on the {TIER_LABELS[tierKey]} spectrum
-        </span>
+        <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,fontStyle:"italic",marginLeft:"auto"}}>▲ You = your value on the spectrum</span>
       </div>
 
-      <div style={{...card,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"200px 115px 1fr 130px",gap:12,padding:"10px 18px",
-          background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
-          {[["Metric & Category","left"],["Your Value","center"],["Benchmark Spectrum","left"],["Reference Range","right"]].map(([h,align])=>(
-            <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,
-              textTransform:"uppercase",letterSpacing:"0.08em",textAlign:align}}>{h}</div>
+      {visible.length===0 && (
+        <div style={{...card,padding:"32px",textAlign:"center",fontFamily:FONT.sans,fontSize:13,color:C.textMuted}}>
+          No metrics entered for this category.
+        </div>
+      )}
+
+      {visible.length > 0 && (
+        <div style={{...card,overflow:"hidden"}}>
+          <div style={{display:"grid",gridTemplateColumns:"200px 115px 1fr 130px",gap:12,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+            {[["Metric","left"],["Your Value","center"],["Benchmark Spectrum","left"],["Reference Range","right"]].map(([h,align]) => (
+              <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.08em",textAlign:align}}>{h}</div>
+            ))}
+          </div>
+          {visible.map(r => (
+            <MetricSpectrumRow key={r.key}
+              name={r.metric} unit={r.units}
+              higherIsBetter={r.hib}
+              indMin={r.bench.indMin} indMax={r.bench.indMax}
+              bicMin={r.bench.bicMin} bicMax={r.bench.bicMax}
+              desc={r.category} orgValue={r.val} category={BENCH_CAT_SHORT[r.category]}/>
           ))}
         </div>
-        {visible.map(r=>(
-          <MetricSpectrumRow key={r.key}
-            name={r.name} unit={r.unit} higherIsBetter={r.higherIsBetter}
-            indMin={r.indMin} indMax={r.indMax} bicMin={r.bicMin} bicMax={r.bicMax}
-            desc={r.desc} orgValue={r.val} category={r.cat}/>
-        ))}
-      </div>
+      )}
     </div>
   );
 }
-
 
 // ─── Process results tab ──────────────────────────────────────
 function TabProcessResults({ maturityScores }) {
@@ -790,7 +754,7 @@ function TabRoadmap({ displayScores, valueOpps }) {
 export default function Page5({ onBack, setPage, onNext, onDashboard, role, readOnly, assessment,
   metricsData, maturityScores, assessmentPath, carrierInfo }) {
 
-  const { completeAssessment, metricBenchmarks } = useApp();
+  const { completeAssessment, benchmarkOverrides } = useApp();
 
   const hasMetrics  = metricsData  && Object.keys(metricsData).length > 0;
   const hasMaturity = maturityScores && Object.keys(maturityScores).length > 0;
@@ -799,7 +763,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   // Compute lens scores from real data
   const lensScores = useMemo(()=>{
     if (readOnly && assessment?.lens_scores) return assessment.lens_scores;
-    if (hasMetrics)  return computeScoresFromMetrics(metricsData, carrierInfo, metricBenchmarks);
+    if (hasMetrics)  return computeScoresFromMetrics(metricsData, carrierInfo, benchmarkOverrides);
     if (hasMaturity) return computeScoresFromMaturity(maturityScores);
     return {};
   }, [metricsData, maturityScores, readOnly, assessment]);
