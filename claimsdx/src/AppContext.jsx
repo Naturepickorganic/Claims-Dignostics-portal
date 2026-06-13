@@ -31,10 +31,15 @@ export function AppProvider({ children }) {
   const auth = useAuth();
   const [benchmarks, setBenchmarks]         = useState(BENCHMARK_DATA);
   const [benchmarkOverrides, setBenchmarkOverrides] = useState({});
+  // Ref keeps a sync copy of overrides so updateBenchmarkOverride can read
+  // current state without stale closures when calling saveBenchmarkOverride
+  const overridesRef = useRef({});
+  useEffect(() => { overridesRef.current = benchmarkOverrides; }, [benchmarkOverrides]);
+
   const [assessmentId, setAssessmentId]     = useState(null);
   const [saveStatus, setSaveStatus]         = useState("idle");
 
-  // Load benchmark overrides from Supabase on mount (admin edits persist across sessions)
+  // Load benchmark overrides from Supabase on mount
   useEffect(() => {
     if (!SUPABASE_ENABLED) return;
     loadBenchmarkOverrides().then(({ overrides }) => {
@@ -44,21 +49,24 @@ export function AppProvider({ children }) {
     });
   }, []);
 
-  // Admin: update a single benchmark value and persist to Supabase
-  // Key format: "{lob}:{metricName}:{tier}"
-  const updateBenchmarkOverride = useCallback(async (lob, metricName, tier, field, value) => {
+  // Admin: update one benchmark field and persist to Supabase
+  const updateBenchmarkOverride = useCallback((lob, metricName, tier, field, value) => {
     const overrideKey = `${lob}:${metricName}:${tier}`;
+    const numVal = parseFloat(value);
+    const safeVal = isNaN(numVal) ? 0 : numVal;
+
+    // 1. Update local state immediately for snappy UI
     setBenchmarkOverrides(prev => {
       const existing = prev[overrideKey] || {};
-      return { ...prev, [overrideKey]: { ...existing, [field]: parseFloat(value) || 0 } };
+      return { ...prev, [overrideKey]: { ...existing, [field]: safeVal } };
     });
-    // Persist to Supabase asynchronously
+
+    // 2. Build the full updated object using ref (avoids stale closure)
+    //    and persist to Supabase
     if (SUPABASE_ENABLED) {
-      setBenchmarkOverrides(current => {
-        const full = current[overrideKey] || {};
-        saveBenchmarkOverride(lob, metricName, tier, full);
-        return current;
-      });
+      const existing = overridesRef.current[overrideKey] || {};
+      const updated  = { ...existing, [field]: safeVal };
+      saveBenchmarkOverride(lob, metricName, parseInt(tier), updated);
     }
   }, []);
 
