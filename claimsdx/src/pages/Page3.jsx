@@ -33,7 +33,7 @@ export default function Page3({ onNext, onBack }) {
       <SectionHead
         tag="Step 2 of 4"
         title="Choose Your Assessment Path"
-        subtitle="Select the approach that best fits your available data and team. Both paths produce the same results view."
+        subtitle="Select the approach that best fits your available data and team. Both paths generate a full diagnostic results report."
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 40 }}>
