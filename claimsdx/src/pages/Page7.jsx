@@ -14,13 +14,13 @@ const L1_MATCH = {
 };
 
 const SCALE_LABELS = [
-  "1 — Minimal or no alignment with best-in-class practices; significant improvements needed",
-  "2 — Partial alignment with best-in-class practices; multiple areas require enhancement",
-  "3 — Some alignment with best-in-class practices; opportunities exist for optimization",
-  "4 — Strong alignment with best-in-class practices; minor gaps remain",
-  "5 — Fully aligned with best-in-class practices; no significant improvements required",
+  "1 — Basic: Minimal maturity; significant gaps vs best-in-class practices",
+  "2 — Basic: Partial maturity; multiple areas require improvement",
+  "3 — Intermediate: Moderate maturity; opportunities for optimization exist",
+  "4 — Best in Class: Strong maturity; minor gaps remain",
+  "5 — Best in Class: Fully aligned; no significant improvements required",
 ];
-const SCALE_SHORT  = ["1 — Minimal","2 — Partial","3 — Some","4 — Strong","5 — Fully Aligned"];
+const SCALE_SHORT  = ["1 — Basic","2 — Basic","3 — Intermediate","4 — Best in Class","5 — Best in Class"];
 const SCALE_COLORS = ["#dc2626","#ea580c","#ca8a04","#16a34a","#166534"];
 const SCALE_BG     = ["#fef2f2","#fff7ed","#fefce8","#f0fdf4","#dcfce7"];
 const SCALE_BORDER = ["#fca5a5","#fdba74","#fde047","#86efac","#4ade80"];
@@ -117,79 +117,66 @@ function L3Row({ item, scores, onScore }) {
 
       {/* Expanded content */}
       {expanded && (
-        <div style={{ borderTop: "1px solid #f1f5f9", padding: "16px", background: "#fafbfc", display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* ── PROCESS SECTION ── */}
-          <div style={{ border: "1.5px solid #86efac", borderRadius: 10, overflow: "hidden" }}>
-            <div style={{ background: "#f0fdf4", padding: "10px 16px", borderBottom: "1px solid #86efac", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 16 }}>◎</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.07em" }}>Process Maturity</span>
-              {procScore && <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: SCALE_COLORS[procScore-1], background: SCALE_BG[procScore-1], border: "1px solid " + SCALE_BORDER[procScore-1], borderRadius: 4, padding: "2px 10px" }}>{SCALE_LABELS[procScore-1]}</span>}
-            </div>
-            <div style={{ padding: "12px 14px" }}>
-              {/* Process maturity descriptions */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
-                {["Basic","Intermediate","BestInClass"].map((lvl, i) => {
-                  const label = lvl === "BestInClass" ? "Best-in-Class" : lvl;
-                  const bgs  = ["#fff1f2","#fffbeb","#f0fdf4"];
-                  const brs  = ["#fecdd3","#fde68a","#bbf7d0"];
-                  const clrs = ["#e11d48","#b45309","#166534"];
-                  return item[lvl]?.proc ? (
-                    <div key={lvl} style={{ background: bgs[i], border: "1px solid " + brs[i], borderRadius: 7, padding: "9px 11px" }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: clrs[i], marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-                      <div style={{ fontSize: 11, color: C.textMid, lineHeight: 1.55 }}>{item[lvl].proc}</div>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-              {/* Process score pill */}
-              <ScorePill value={procScore} onChange={v => onScore(item.l3 + "_proc", v)} />
-            </div>
-          </div>
-
-          {/* ── TECHNOLOGY SECTION ── */}
-          <div style={{ border: "1.5px solid #bae6fd", borderRadius: 10, overflow: "hidden" }}>
-            <div style={{ background: "#f0f9ff", padding: "10px 16px", borderBottom: "1px solid #bae6fd", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 16 }}>⚙</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: "0.07em" }}>Technology Maturity</span>
-              {techScore && <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: SCALE_COLORS[techScore-1], background: SCALE_BG[techScore-1], border: "1px solid " + SCALE_BORDER[techScore-1], borderRadius: 4, padding: "2px 10px" }}>{SCALE_LABELS[techScore-1]}</span>}
-            </div>
-            <div style={{ padding: "12px 14px" }}>
-              {/* Technology maturity descriptions */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
-                {["Basic","Intermediate","BestInClass"].map((lvl, i) => {
-                  const label = lvl === "BestInClass" ? "Best-in-Class" : lvl;
-                  const bgs  = ["#fff1f2","#fffbeb","#f0fdf4"];
-                  const brs  = ["#fecdd3","#fde68a","#bbf7d0"];
-                  const clrs = ["#e11d48","#b45309","#166534"];
-                  return item[lvl]?.tech ? (
-                    <div key={lvl} style={{ background: bgs[i], border: "1px solid " + brs[i], borderRadius: 7, padding: "9px 11px" }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: clrs[i], marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+        <div style={{ borderTop: "1px solid #f1f5f9", padding: "14px 16px", background: "#fafbfc" }}>
+          {/* Maturity levels reference */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+            {["Basic","Intermediate","BestInClass"].map((lvl, i) => {
+              const label = lvl === "BestInClass" ? "Best-in-Class" : lvl;
+              const bgs = ["#fff1f2","#fffbeb","#f0fdf4"];
+              const brs = ["#fecdd3","#fde68a","#bbf7d0"];
+              const clrs = ["#e11d48","#b45309","#166534"];
+              return (
+                <div key={lvl} style={{ background: bgs[i], border: "1px solid " + brs[i], borderRadius: 8, padding: "9px 11px" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: clrs[i], marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                  {item[lvl]?.tech && (
+                    <div style={{ marginBottom: 5 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, marginBottom: 2 }}>TECHNOLOGY</div>
                       <div style={{ fontSize: 11, color: C.textMid, lineHeight: 1.55 }}>{item[lvl].tech}</div>
                     </div>
-                  ) : null;
-                })}
-              </div>
-              {/* Technology score pill */}
-              <ScorePill value={techScore} onChange={v => onScore(item.l3 + "_tech", v)} />
-            </div>
+                  )}
+                  {item[lvl]?.proc && (
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, marginBottom: 2 }}>PROCESS</div>
+                      <div style={{ fontSize: 11, color: C.textMid, lineHeight: 1.55 }}>{item[lvl].proc}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* ── COMBINED ── */}
-          {techScore && procScore && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, padding: "12px 16px", background: "white", border: "2px solid " + SCALE_COLORS[Math.round((techScore+procScore)/2)-1], borderRadius: 8 }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Combined Score</div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], fontFamily: "monospace", lineHeight: 1 }}>
+          {/* Scoring — Technology and Process side by side */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 20, alignItems: "flex-start" }}>
+            <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#0369a1", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>⚙ Technology</div>
+              <ScorePill value={techScore} onChange={v => onScore(item.l3 + "_tech", v)} />
+            </div>
+            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#15803d", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>◎ Process</div>
+              <ScorePill value={procScore} onChange={v => onScore(item.l3 + "_proc", v)} />
+            </div>
+            {techScore && procScore && (
+              <div style={{ textAlign: "center", padding: "12px 16px", background: "white", border: "2px solid " + SCALE_COLORS[Math.round((techScore+procScore)/2)-1], borderRadius: 8 }}>
+                <div style={{ fontSize: 9, color: C.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Combined</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], fontFamily: "monospace", lineHeight: 1 }}>
                   {((techScore + procScore) / 2).toFixed(1)}
                 </div>
+                <div style={{ fontSize: 9, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], marginTop: 3 }}>avg</div>
               </div>
-              <div style={{ fontSize: 12, color: SCALE_COLORS[Math.round((techScore+procScore)/2)-1], maxWidth: 360, lineHeight: 1.5 }}>
-                {SCALE_LABELS[Math.round((techScore+procScore)/2)-1].replace(/^\d+ — /, "")}
-              </div>
+            )}
+          </div>
+          {/* Scale reference */}
+          <div style={{ marginTop: 12, padding: "10px 12px", background: "#f8fafc", borderRadius: 6, border: "1px solid #e2e8f0" }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Scoring Scale Reference</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {SCALE_LABELS.map((l,i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: SCALE_COLORS[i], background: SCALE_BG[i], border: "1px solid " + SCALE_BORDER[i], borderRadius: 4, padding: "1px 7px", flexShrink: 0, minWidth: 22, textAlign: "center" }}>{i+1}</span>
+                  <span style={{ fontSize: 11, color: C.textSoft, lineHeight: 1.5 }}>{l.replace(/^\d+ — /, "")}</span>
+                </div>
+              ))}
             </div>
-          )}
-
+          </div>
         </div>
       )}
     </div>
@@ -317,18 +304,11 @@ export default function Page7({ onNext, onBack, processSelections = [] }) {
             </span>
           </div>
 
-          {/* Scale legend — shown once at top only */}
-          <div style={{ marginTop: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: "10px 14px" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 7 }}>Scoring Scale</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {SCALE_LABELS.map((l,i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: SCALE_COLORS[i], background: SCALE_BG[i], border: "1px solid " + SCALE_BORDER[i], borderRadius: 4, padding: "1px 7px" }}>{i+1}</span>
-                  <span style={{ fontSize: 10, color: C.textSoft }}>{l.replace(/^\d+ — /, "")}</span>
-                  {i < SCALE_LABELS.length-1 && <span style={{ color: "#d8ebe2", fontSize: 10 }}>·</span>}
-                </div>
-              ))}
-            </div>
+          {/* Scale legend */}
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            {SCALE_LABELS.map((l,i) => (
+              <span key={l} style={{ fontSize: 10, color: SCALE_COLORS[i], background: SCALE_BG[i], borderRadius: 4, padding: "2px 8px", border: "1px solid " + SCALE_COLORS[i] + "55", fontWeight: 600 }}>{l}</span>
+            ))}
           </div>
         </div>
       </div>
