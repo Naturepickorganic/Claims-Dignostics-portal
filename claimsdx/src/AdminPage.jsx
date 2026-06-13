@@ -10,6 +10,11 @@ import { LOB_OPTIONS } from "../benchmarkData.js";
 import { MOCK_ASSESSMENTS, getMockStats, getLensAverages, LENS_LABELS, LENS_KEYS } from "../mockData.js";
 import { listAllAssessments } from "../lib/progressDB.js";
 
+import { BENCHMARK_DATA } from "../benchmarkData.js";
+import {
+  BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_LABEL, BENCH_LOB_SHORT,
+  isHigherBetter, getBenchForTier,
+} from "../benchmarkHelpers.js";
 // ── Shared constants ─────────────────────────────────────────
 const MATURITY_COLOR = { Leading:"#166534", Advanced:"#1a4731", Developing:"#92400e", Foundational:"#991b1b" };
 const MATURITY_BG    = { Leading:"#f0f7f3", Advanced:"#f0f7f3", Developing:"#fef3c7", Foundational:"#fee2e2" };
@@ -588,80 +593,169 @@ function TabComparison({ assessments }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TAB 4 — Benchmark Editor
+// TAB 4 — Benchmark Editor (LOB + Tier tabs, from benchmarkData.js)
 // ═══════════════════════════════════════════════════════════════
+const BENCH_LOBS = [
+  { key:"personal_lines",       label:"Personal Lines" },
+  { key:"commercial_lines",     label:"Commercial Lines" },
+  { key:"workers_compensation", label:"Workers Comp" },
+  { key:"general_liability",    label:"General Liability" },
+];
+const TIER_META2 = {
+  1: { label:"Tier 1", sub:"Over $5B DWP",    color:"#1a4731", bg:"#f0f7f3" },
+  2: { label:"Tier 2", sub:"$1B – $5B DWP",   color:"#1e3a5f", bg:"#eff6ff" },
+  3: { label:"Tier 3", sub:"$500M – $1B DWP", color:"#92400e", bg:"#fef3c7" },
+};
+
 function TabBenchmarks() {
-  const { benchmarks, updateBenchmark } = useApp();
-  const [activeLob, setActiveLob] = useState("personal_lines");
+  const { benchmarkOverrides, updateBenchmarkOverride } = useApp();
+  const [activeLob,  setActiveLob]  = useState("personal_lines");
+  const [activeTier, setActiveTier] = useState(2);
   const [expandedCat, setExpandedCat] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const lob = benchmarks[activeLob] || [];
-  const cats = [...new Set(lob.map(m=>m.category).filter(Boolean))];
+  const tm = TIER_META2[activeTier];
+  const metrics = BENCHMARK_DATA[activeLob] || [];
+  const cats = [...new Set(metrics.map(m => m.category))];
+  const totalCount = metrics.length;
 
-  const handleSave = () => { setSaved(true); setTimeout(()=>setSaved(false), 2500); };
+  const handleSave = async () => {
+    setSaving(true);
+    // saveBenchmarkOverride is called per-edit in updateBenchmarkOverride
+    // This button just gives visual confirmation
+    setSaved(true);
+    setSaving(false);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const fmt = v => v == null ? "" : (v >= 1000 ? (v/1000).toFixed(1)+"K" : v%1===0?String(v):v.toFixed(2));
 
   return (
     <div>
+      {/* LOB + Tier selectors */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          {LOB_OPTIONS.map(l=>(
-            <button key={l.id} onClick={()=>setActiveLob(l.id)} style={{
-              padding:"6px 13px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
-              fontWeight:activeLob===l.id?700:400,
-              border:"1px solid "+(activeLob===l.id?"#1a4731":"#d8ebe2"),
-              background:activeLob===l.id?"#1a4731":"white",
-              color:activeLob===l.id?"white":C.textSoft,
+          {BENCH_LOBS.map(l => (
+            <button key={l.key} onClick={() => { setActiveLob(l.key); setExpandedCat(null); }} style={{
+              padding:"8px 16px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+              fontWeight:activeLob===l.key?700:400,
+              border:"1px solid "+(activeLob===l.key?"#1a4731":"#d8ebe2"),
+              background:activeLob===l.key?"#1a4731":"white",
+              color:activeLob===l.key?"white":C.textSoft,
             }}>{l.label}</button>
           ))}
         </div>
-        <button onClick={handleSave} style={{...btnPrimary,borderRadius:6,padding:"8px 18px",fontSize:12,background:saved?"#166534":"#1a4731"}}>
-          {saved?"✓ Saved":"Save Overrides"}
-        </button>
+        <div style={{display:"flex",gap:6}}>
+          {[1,2,3].map(t => {
+            const tm2 = TIER_META2[t];
+            return (
+              <button key={t} onClick={() => setActiveTier(t)} style={{
+                padding:"7px 14px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,cursor:"pointer",
+                fontWeight:activeTier===t?700:400,
+                border:"1.5px solid "+(activeTier===t?tm2.color:"#d8ebe2"),
+                background:activeTier===t?tm2.color:"white",
+                color:activeTier===t?"white":C.textSoft,
+                display:"flex",flexDirection:"column",alignItems:"center",
+              }}>
+                <span style={{fontWeight:700,fontSize:11}}>{tm2.label}</span>
+                <span style={{fontSize:9,opacity:0.8}}>{tm2.sub}</span>
+              </button>
+            );
+          })}
+          <button onClick={handleSave} style={{
+            ...btnPrimary,borderRadius:5,padding:"8px 18px",fontSize:12,
+            background:saved?"#166534":"#1a4731",
+          }}>
+            {saving?"Saving…":saved?"✓ Saved":"Save Changes"}
+          </button>
+        </div>
       </div>
 
-      <div style={{...card,padding:"12px 16px",marginBottom:14,background:"#fffbeb",border:"1px solid #fde68a"}}>
-        <span style={{fontFamily:FONT.sans,fontSize:11,color:"#92400e"}}>
-          ℹ Edits here update the benchmark ranges shown in consultant assessments. Changes are in-memory — connect Supabase benchmark_overrides to persist.
+      {/* Context banner */}
+      <div style={{...card,padding:"11px 18px",marginBottom:14,background:tm.bg,borderLeft:"4px solid "+tm.color,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:tm.color}}>
+          {BENCH_LOB_LABEL[activeLob]} · {tm.label} — {tm.sub}
+          <span style={{fontWeight:400,color:C.textSoft,marginLeft:8}}>IND = industry range · BIC = best-in-class</span>
         </span>
+        <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted}}>{totalCount} metrics · admin editable</span>
       </div>
 
-      {cats.map(cat=>{
-        const metrics=lob.filter(m=>m.category===cat);
-        const isOpen=expandedCat===cat;
+      {cats.map(cat => {
+        const catMetrics = metrics.filter(m => m.category === cat);
+        const isOpen = expandedCat === cat;
         return (
           <div key={cat} style={{...card,overflow:"hidden",marginBottom:10}}>
-            <button onClick={()=>setExpandedCat(isOpen?null:cat)}
-              style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"#f7faf8",border:"none",cursor:"pointer",borderBottom:isOpen?"1px solid #d8ebe2":"none"}}>
-              <span style={{fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text}}>{cat}</span>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted}}>{metrics.length} metrics</span>
-                {isOpen?<ChevronDown size={14} color={C.textMuted}/>:<ChevronDown size={14} color={C.textMuted} style={{transform:"rotate(-90deg)"}}/>}
+            <button onClick={() => setExpandedCat(isOpen ? null : cat)} style={{
+              width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"13px 20px",background:"#f7faf8",border:"none",cursor:"pointer",
+              borderBottom:isOpen?"1px solid #d8ebe2":"none",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text}}>{cat}</span>
+                <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,background:"#e8f2ec",padding:"2px 7px",borderRadius:3}}>{catMetrics.length} metrics</span>
               </div>
+              <ChevronDown size={14} color={C.textMuted} style={{transform:isOpen?"rotate(0)":"rotate(-90deg)",transition:"0.15s"}}/>
             </button>
-            {isOpen&&(
+
+
+            {isOpen && (
               <div>
-                <div style={{display:"grid",gridTemplateColumns:"1.5fr repeat(6,1fr)",gap:8,padding:"8px 18px",background:"#f7faf8",borderBottom:"1px solid #d8ebe2"}}>
-                  {["Metric","T1 IndMin","T1 IndMax","T2 IndMin","T2 IndMax","BIC Min","BIC Max"].map(h=>(
-                    <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>{h}</div>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 60px 52px 1fr 1fr 1fr 1fr",gap:8,padding:"9px 20px",background:"#f7faf8",borderBottom:"1px solid #d8ebe2"}}>
+                  {[["Metric","left"],["Unit","center"],["Dir","center"],["IND MIN","center"],["IND MAX","center"],["BIC MIN","center"],["BIC MAX","center"]].map(([h,align]) => (
+                    <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",textAlign:align}}>{h}</div>
                   ))}
                 </div>
-                {metrics.map((m,mi)=>(
-                  <div key={m.metric} style={{display:"grid",gridTemplateColumns:"1.5fr repeat(6,1fr)",gap:8,padding:"10px 18px",borderBottom:mi<metrics.length-1?"1px solid #edf5f0":"none",alignItems:"center"}}>
-                    <div>
-                      <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid}}>{m.metric}</div>
-                      <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted}}>{m.units}</div>
+                {/* key={activeLob+activeTier+cat} forces full remount when tier or LOB changes,
+                    fixing "all tiers show same data" bug where React reused DOM nodes
+                    with stale uncontrolled input values */}
+                <div key={`${activeLob}-${activeTier}-${cat}`}>
+                {catMetrics.map((m, mi) => {
+                  const hib     = isHigherBetter(m);
+                  const defBench= getBenchForTier(m, activeTier);
+                  const overKey = `${activeLob}:${m.metric}:${activeTier}`;
+                  const override= benchmarkOverrides?.[overKey];
+                  const bench   = override || defBench;
+                  const fromDB  = !!override;
+                  return (
+                    <div key={m.metric} style={{
+                      display:"grid",gridTemplateColumns:"2fr 60px 52px 1fr 1fr 1fr 1fr",gap:8,
+                      padding:"11px 20px",borderBottom:mi<catMetrics.length-1?"1px solid #edf5f0":"none",
+                      alignItems:"center",background:mi%2===0?"white":"#fafcfa",
+                    }}>
+                      <div>
+                        <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid}}>{m.metric}</div>
+                        <div style={{fontSize:9,fontFamily:FONT.sans,marginTop:1,color:fromDB?"#166534":C.textMuted}}>
+                          {fromDB?"● From DB":"○ Default"}
+                        </div>
+                      </div>
+                      <div style={{fontFamily:FONT.mono,fontSize:11,color:C.textSoft,textAlign:"center"}}>{m.units}</div>
+                      <div style={{textAlign:"center"}}>
+                        <span style={{fontSize:10,fontWeight:700,padding:"2px 5px",borderRadius:3,
+                          color:hib?"#166534":"#1e3a5f",background:hib?"#f0f7f3":"#eff6ff"}}>
+                          {hib?"↑ Hi":"↓ Lo"}
+                        </span>
+                      </div>
+                      {["indMin","indMax","bicMin","bicMax"].map((field, fi) => (
+                        <input
+                          key={`${overKey}-${field}`}
+                          type="number"
+                          step="any"
+                          value={bench[field] !== undefined && bench[field] !== null ? bench[field] : ""}
+                          onChange={e => updateBenchmarkOverride(activeLob, m.metric, activeTier, field, e.target.value)}
+                          style={{
+                            padding:"6px 8px",width:"100%",boxSizing:"border-box",
+                            border:"1.5px solid "+(fi>=2?"#c3ddd0":"#d8ebe2"),borderRadius:5,
+                            fontFamily:FONT.mono,fontSize:12,outline:"none",textAlign:"center",
+                            background:fi>=2?"#f9fffe":"white",
+                            color:fi>=2?"#166534":C.text,fontWeight:fi>=2?700:400,
+                          }}
+                        />
+                      ))}
                     </div>
-                    {[["tier1","indMin"],["tier1","indMax"],["tier2","indMin"],["tier2","indMax"],["tier2","bicMin"],["tier2","bicMax"]].map(([tk,fk])=>{
-                      const lobIdx=lob.indexOf(m);
-                      return (
-                        <input key={tk+fk} type="number" defaultValue={m[tk]?.[fk]||""}
-                          onChange={e=>updateBenchmark(activeLob,lobIdx,fk,tk,e.target.value)}
-                          style={{padding:"5px 7px",border:"1px solid #d8ebe2",borderRadius:4,fontFamily:FONT.mono,fontSize:11,width:"100%",boxSizing:"border-box",outline:"none"}}/>
-                      );
-                    })}
-                  </div>
-                ))}
+                  );
+                })}
+                </div>
               </div>
             )}
           </div>
@@ -671,9 +765,6 @@ function TabBenchmarks() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TAB 5 — User Roles
-// ═══════════════════════════════════════════════════════════════
 function TabUsers() {
   return (
     <div style={{maxWidth:640}}>
@@ -810,3 +901,4 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
     </div>
   );
 }
+
