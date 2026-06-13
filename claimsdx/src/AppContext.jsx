@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { BENCHMARK_DATA } from "./benchmarkData.js";
-import { METRICS_DATA } from "./constants.js";
 import { useAuth } from "./lib/useAuth.js";
 import { SUPABASE_ENABLED } from "./lib/supabase.js";
 import {
@@ -10,6 +9,8 @@ import {
   loadProgressFromDB,
   markAssessmentComplete,
   saveResults,
+  loadBenchmarkOverrides,
+  saveBenchmarkOverride,
 } from "./lib/progressDB.js";
 
 const AppContext = createContext(null);
@@ -28,20 +29,38 @@ export const ROLE_ACCESS = {
 
 export function AppProvider({ children }) {
   const auth = useAuth();
-  const [benchmarks, setBenchmarks]               = useState(BENCHMARK_DATA);
-  const [metricBenchmarks, setMetricBenchmarks]   = useState(() => {
-    // Deep copy METRICS_DATA into editable state so admins can override values
-    const copy = {};
-    for (const [cat, metrics] of Object.entries(METRICS_DATA)) {
-      copy[cat] = metrics.map(entry => {
-        const [name, unit, hib, tierData, desc] = entry;
-        return [name, unit, hib, JSON.parse(JSON.stringify(tierData)), desc];
+  const [benchmarks, setBenchmarks]         = useState(BENCHMARK_DATA);
+  const [benchmarkOverrides, setBenchmarkOverrides] = useState({});
+  const [assessmentId, setAssessmentId]     = useState(null);
+  const [saveStatus, setSaveStatus]         = useState("idle");
+
+  // Load benchmark overrides from Supabase on mount (admin edits persist across sessions)
+  useEffect(() => {
+    if (!SUPABASE_ENABLED) return;
+    loadBenchmarkOverrides().then(({ overrides }) => {
+      if (overrides && Object.keys(overrides).length > 0) {
+        setBenchmarkOverrides(overrides);
+      }
+    });
+  }, []);
+
+  // Admin: update a single benchmark value and persist to Supabase
+  // Key format: "{lob}:{metricName}:{tier}"
+  const updateBenchmarkOverride = useCallback(async (lob, metricName, tier, field, value) => {
+    const overrideKey = `${lob}:${metricName}:${tier}`;
+    setBenchmarkOverrides(prev => {
+      const existing = prev[overrideKey] || {};
+      return { ...prev, [overrideKey]: { ...existing, [field]: parseFloat(value) || 0 } };
+    });
+    // Persist to Supabase asynchronously
+    if (SUPABASE_ENABLED) {
+      setBenchmarkOverrides(current => {
+        const full = current[overrideKey] || {};
+        saveBenchmarkOverride(lob, metricName, tier, full);
+        return current;
       });
     }
-    return copy;
-  });
-  const [assessmentId, setAssessmentId]           = useState(null);
-  const [saveStatus, setSaveStatus]               = useState("idle");
+  }, []);
 
   // Refs to prevent race conditions (not affected by stale closures)
   const assessmentIdRef  = useRef(null);
@@ -57,19 +76,6 @@ export function AppProvider({ children }) {
       return next;
     });
   };
-
-  // Update a single tier benchmark value in the editable metricBenchmarks state
-  // cat = category, metricIdx = index in cat array, tier = "t1"|"t2"|"t3", field = "indMin"|"indMax"|"bicMin"|"bicMax"
-  const updateMetricBenchmark = useCallback((cat, metricIdx, tier, field, value) => {
-    setMetricBenchmarks(prev => {
-      const next = { ...prev };
-      next[cat] = [...prev[cat]];
-      const entry = [...next[cat][metricIdx]];
-      entry[3] = { ...entry[3], [tier]: { ...entry[3][tier], [field]: parseFloat(value) || 0 } };
-      next[cat][metricIdx] = entry;
-      return next;
-    });
-  }, []);
 
   const saveProgress = useCallback(async (stateSnapshot) => {
     // Always save to localStorage as backup
@@ -205,8 +211,8 @@ export function AppProvider({ children }) {
       role,
       benchmarks,
       updateBenchmark,
-      metricBenchmarks,
-      updateMetricBenchmark,
+      benchmarkOverrides,
+      updateBenchmarkOverride,
       saveProgress,
       loadProgress,
       clearProgress,
