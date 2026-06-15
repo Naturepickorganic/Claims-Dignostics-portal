@@ -8,7 +8,7 @@ import { Tag, PageWrap, Nav } from "../components.jsx";
 import { useApp, ROLES } from "../AppContext.jsx";
 import { LOB_OPTIONS } from "../benchmarkData.js";
 import { MOCK_ASSESSMENTS, getMockStats, getLensAverages, LENS_LABELS, LENS_KEYS } from "../mockData.js";
-import { listAllAssessments } from "../lib/progressDB.js";
+import { listAllAssessments, listAllUsers, updateUserRole } from "../lib/progressDB.js";
 
 import { BENCHMARK_DATA } from "../benchmarkData.js";
 import {
@@ -765,47 +765,279 @@ function TabBenchmarks() {
   );
 }
 
-function TabUsers() {
+
+// ═══════════════════════════════════════════════════════════════
+// TAB 5 — User Roles (live Supabase user management)
+// ═══════════════════════════════════════════════════════════════
+const ROLE_META = {
+  admin:      { color:"#166534", bg:"#f0f7f3", border:"#c3ddd0", label:"Admin",      desc:"Full access including settings" },
+  consultant: { color:"#185fa5", bg:"#eff6ff", border:"#93c5fd", label:"Consultant", desc:"Full assessment access"          },
+  sales:      { color:"#991b1b", bg:"#fee2e2", border:"#fca5a5", label:"Sales",      desc:"Demo mode — limited screens"    },
+};
+
+const INITIALS_COLORS = [
+  { bg:"#f0f7f3", color:"#1a4731" },
+  { bg:"#eff6ff", color:"#185fa5" },
+  { bg:"#fef3c7", color:"#92400e" },
+  { bg:"#fff1f2", color:"#9f1239" },
+  { bg:"#eef2ff", color:"#3730a3" },
+  { bg:"#e0f2fe", color:"#0369a1" },
+];
+
+function RoleBadge({ role }) {
+  const m = ROLE_META[role] || ROLE_META.consultant;
   return (
-    <div style={{maxWidth:640}}>
-      <div style={{...card,padding:"24px 28px",marginBottom:16}}>
-        <div style={{fontFamily:FONT.serif,fontSize:16,fontWeight:700,color:C.text,marginBottom:6}}>Role Management</div>
-        <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft,marginBottom:20}}>
-          Roles are managed directly in Supabase. Use the SQL snippet below to promote or change any user's role.
+    <span style={{
+      fontSize:11,fontFamily:FONT.sans,fontWeight:700,padding:"3px 9px",borderRadius:99,
+      background:m.bg,color:m.color,border:"1px solid "+m.border,
+      display:"inline-block",textTransform:"capitalize",
+    }}>{m.label}</span>
+  );
+}
+
+function UserRow({ user, isSelf, onRoleChange, idx }) {
+  const [pendingRole, setPendingRole] = useState(user.role);
+  const [saving,      setSaving]      = useState(false);
+  const [saved,       setSaved]       = useState(false);
+  const [error,       setError]       = useState(null);
+  const changed = pendingRole !== user.role;
+  const ic = INITIALS_COLORS[idx % INITIALS_COLORS.length];
+  const initials = (user.full_name || user.email || "?")
+    .split(" ").map(w => w[0]).join("").toUpperCase().slice(0,2);
+  const joinedDate = user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-US",{month:"short",year:"numeric"})
+    : "—";
+
+  const handleSave = async () => {
+    setSaving(true); setError(null);
+    const { error: err } = await updateUserRole(user.id, pendingRole);
+    setSaving(false);
+    if (err) {
+      setError("Save failed — check permissions");
+    } else {
+      setSaved(true);
+      onRoleChange(user.id, pendingRole);
+      setTimeout(() => setSaved(false), 2500);
+    }
+  };
+
+  return (
+    <div style={{
+      display:"grid",gridTemplateColumns:"2fr 2.2fr 140px 120px",
+      alignItems:"center",padding:"13px 20px",gap:12,
+      borderBottom:"1px solid #edf5f0",
+      background:"white",transition:"background 0.1s",
+    }}
+    onMouseEnter={e=>e.currentTarget.style.background="#f9fbf9"}
+    onMouseLeave={e=>e.currentTarget.style.background="white"}>
+
+      {/* Name + avatar */}
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,
+          background:ic.bg,color:ic.color,fontSize:12,fontWeight:700,
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {initials}
         </div>
-        <div style={{marginBottom:14}}>
-          {Object.entries(ROLES).map(([key,r])=>(
-            <div key={key} style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12,padding:"12px 16px",borderRadius:6,background:"#f7faf8",border:"1px solid #edf5f0"}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:r.color,flexShrink:0,marginTop:4}}/>
-              <div>
-                <div style={{fontFamily:FONT.sans,fontSize:13,fontWeight:700,color:C.text,marginBottom:2}}>{r.label}</div>
-                <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft}}>{r.desc}</div>
-              </div>
-            </div>
-          ))}
+        <div>
+          <div style={{fontFamily:FONT.sans,fontSize:13,fontWeight:600,color:C.text}}>
+            {user.full_name || "—"}
+            {isSelf && <span style={{fontSize:10,color:C.textMuted,fontWeight:400,marginLeft:5}}>(you)</span>}
+          </div>
+          <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,marginTop:1}}>Joined {joinedDate}</div>
         </div>
       </div>
-      <div style={{...card,padding:"20px 24px"}}>
-        <div style={{fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text,marginBottom:12}}>Assign role in Supabase SQL Editor:</div>
-        {[
-          ["Promote to Admin",   "update public.profiles set role = 'admin'      where email = 'user@email.com';"],
-          ["Set to Consultant",  "update public.profiles set role = 'consultant' where email = 'user@email.com';"],
-          ["Set to Sales",       "update public.profiles set role = 'sales'      where email = 'user@email.com';"],
-          ["View all users",     "select id, email, full_name, role from public.profiles order by created_at desc;"],
-        ].map(([label,sql])=>(
-          <div key={label} style={{marginBottom:14}}>
-            <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginBottom:5,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>{label}</div>
-            <div style={{background:"#1a1a2e",borderRadius:6,padding:"10px 14px",fontFamily:FONT.mono,fontSize:12,color:"#86efac",lineHeight:1.6,userSelect:"all"}}>{sql}</div>
+
+      {/* Email */}
+      <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft,
+        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+        {user.email}
+      </div>
+
+      {/* Role selector */}
+      <div>
+        {isSelf ? (
+          <div>
+            <RoleBadge role={user.role}/>
+            <div style={{fontFamily:FONT.sans,fontSize:9,color:C.textMuted,marginTop:3}}>Cannot change own role</div>
           </div>
-        ))}
+        ) : (
+          <select
+            value={pendingRole}
+            onChange={e=>{ setPendingRole(e.target.value); setSaved(false); }}
+            style={{width:"100%",padding:"6px 8px",borderRadius:5,fontSize:12,
+              fontFamily:FONT.sans,border:"1px solid #d8ebe2",outline:"none",
+              background:"white",cursor:"pointer"}}>
+            <option value="admin">Admin</option>
+            <option value="consultant">Consultant</option>
+            <option value="sales">Sales</option>
+          </select>
+        )}
+      </div>
+
+      {/* Save / status */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8}}>
+        {!isSelf && (
+          <>
+            <RoleBadge role={pendingRole}/>
+            {changed && !saving && !saved && (
+              <button onClick={handleSave} style={{
+                padding:"5px 12px",borderRadius:5,fontSize:12,fontFamily:FONT.sans,
+                border:"none",background:"#1a4731",color:"white",cursor:"pointer",
+                display:"flex",alignItems:"center",gap:5,fontWeight:600,
+              }}>
+                Save
+              </button>
+            )}
+            {saving && (
+              <span style={{fontSize:11,color:C.textMuted,fontFamily:FONT.sans}}>Saving…</span>
+            )}
+            {saved && (
+              <span style={{fontSize:11,color:"#166534",fontFamily:FONT.sans,fontWeight:700}}>✓ Saved</span>
+            )}
+          </>
+        )}
+        {error && <span style={{fontSize:10,color:"#991b1b",fontFamily:FONT.sans}}>{error}</span>}
       </div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN — AdminPage (fetches real Supabase data)
-// ═══════════════════════════════════════════════════════════════
+function TabUsers({ currentUserId }) {
+  const { supabaseEnabled } = useApp();
+  const [users,    setUsers]    = useState([]);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
+
+  const fetchUsers = async () => {
+    if (!supabaseEnabled) return;
+    setLoading(true); setError(null);
+    const { users: data, error: err } = await listAllUsers();
+    if (err) setError("Could not load users — run the v23 SQL migration first.");
+    else setUsers(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchUsers(); }, [supabaseEnabled]);
+
+  const handleRoleChange = (userId, newRole) => {
+    setUsers(prev => prev.map(u => u.id === userId ? {...u, role: newRole} : u));
+  };
+
+  const roleCounts = users.reduce((acc, u) => { acc[u.role]=(acc[u.role]||0)+1; return acc; }, {});
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,flexWrap:"wrap",gap:10}}>
+        <div>
+          <div style={{fontFamily:FONT.serif,fontSize:16,fontWeight:700,color:C.text,marginBottom:4}}>User Role Management</div>
+          <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>
+            Change roles directly — updates take effect on the user's next login.
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={fetchUsers} style={{...btnSecondary,borderRadius:5,fontSize:12,padding:"7px 13px",display:"flex",alignItems:"center",gap:5}}>
+            <RefreshCw size={13}/> Refresh
+          </button>
+          <button onClick={()=>setShowInfo(i=>!i)} style={{...btnSecondary,borderRadius:5,fontSize:12,padding:"7px 13px"}}>
+            Role guide
+          </button>
+        </div>
+      </div>
+
+      {/* Role guide (collapsible) */}
+      {showInfo && (
+        <div style={{...card,padding:"16px 20px",marginBottom:16,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+          {Object.entries(ROLE_META).map(([key,m])=>(
+            <div key={key} style={{padding:"12px 14px",borderRadius:6,background:m.bg,border:"1px solid "+m.border}}>
+              <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:m.color,marginBottom:3}}>{m.label}</div>
+              <div style={{fontFamily:FONT.sans,fontSize:11,color:m.color,opacity:0.8}}>{m.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* KPI strip */}
+      {users.length > 0 && (
+        <div style={{display:"flex",gap:10,marginBottom:16}}>
+          {["admin","consultant","sales"].map(r=>{
+            const m=ROLE_META[r];
+            return (
+              <div key={r} style={{...card,padding:"12px 16px",flex:1,borderTop:"3px solid "+m.color}}>
+                <div style={{fontFamily:FONT.mono,fontSize:24,fontWeight:700,color:m.color,lineHeight:1}}>{roleCounts[r]||0}</div>
+                <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginTop:4,textTransform:"uppercase",letterSpacing:"0.07em"}}>{m.label}s</div>
+              </div>
+            );
+          })}
+          <div style={{...card,padding:"12px 16px",flex:1,borderTop:"3px solid #1a4731"}}>
+            <div style={{fontFamily:FONT.mono,fontSize:24,fontWeight:700,color:"#1a4731",lineHeight:1}}>{users.length}</div>
+            <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginTop:4,textTransform:"uppercase",letterSpacing:"0.07em"}}>Total users</div>
+          </div>
+        </div>
+      )}
+
+      {/* User table */}
+      {!supabaseEnabled && (
+        <div style={{...card,padding:"32px",textAlign:"center"}}>
+          <div style={{fontFamily:FONT.serif,fontSize:15,fontWeight:700,color:C.text,marginBottom:8}}>Supabase not connected</div>
+          <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable live user management.</div>
+        </div>
+      )}
+
+      {supabaseEnabled && loading && (
+        <div style={{...card,padding:"32px",textAlign:"center",fontFamily:FONT.sans,fontSize:13,color:C.textMuted}}>Loading users…</div>
+      )}
+
+      {supabaseEnabled && error && (
+        <div style={{...card,padding:"20px",background:"#fee2e2",border:"1px solid #fca5a5"}}>
+          <div style={{fontFamily:FONT.sans,fontSize:13,color:"#991b1b",fontWeight:600,marginBottom:6}}>⚠ {error}</div>
+          <div style={{fontFamily:FONT.mono,fontSize:11,color:"#991b1b",background:"#fff",padding:"8px 12px",borderRadius:4}}>
+            Run: supabase/schema_v23_user_roles.sql in your Supabase SQL Editor
+          </div>
+        </div>
+      )}
+
+      {supabaseEnabled && !loading && !error && users.length > 0 && (
+        <div style={{...card,overflow:"hidden"}}>
+          {/* Table header */}
+          <div style={{display:"grid",gridTemplateColumns:"2fr 2.2fr 140px 120px",gap:12,
+            padding:"10px 20px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+            {["Name","Email","Role","Status"].map(h=>(
+              <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,
+                color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.08em"}}>{h}</div>
+            ))}
+          </div>
+          {users.map((u, i) => (
+            <UserRow
+              key={u.id}
+              user={u}
+              idx={i}
+              isSelf={u.id === currentUserId}
+              onRoleChange={handleRoleChange}
+            />
+          ))}
+        </div>
+      )}
+
+      {supabaseEnabled && !loading && !error && users.length === 0 && (
+        <div style={{...card,padding:"40px",textAlign:"center",fontFamily:FONT.sans,fontSize:13,color:C.textMuted}}>
+          No users found. Invite users from the Supabase Dashboard → Authentication → Users.
+        </div>
+      )}
+
+      {/* Invite instruction */}
+      <div style={{...card,padding:"14px 18px",marginTop:14,display:"flex",gap:10,alignItems:"center",background:"#f7faf8"}}>
+        <div style={{fontSize:18}}>💡</div>
+        <div style={{fontFamily:FONT.sans,fontSize:12,color:C.textSoft}}>
+          To invite a new user: <strong>Supabase Dashboard → Authentication → Users → Invite user</strong>.
+          After they accept, their profile appears here and you can assign their role.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const TABS = [
   { id:"portfolio",  label:"Portfolio Overview", Icon:BarChart3  },
   { id:"history",    label:"Carrier History",    Icon:Database   },
@@ -815,7 +1047,8 @@ const TABS = [
 ];
 
 export default function AdminPage({ onBack, role, profile, onLogout }) {
-  const { supabaseEnabled } = useApp();
+  const { supabaseEnabled, session } = useApp();
+  const currentUserId = session?.user?.id;
   const [tab, setTab]           = useState("portfolio");
   const [assessments, setAssessments] = useState(MOCK_ASSESSMENTS); // default to mock
   const [loading, setLoading]   = useState(false);
@@ -896,7 +1129,7 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
         {tab==="history"    && <TabHistory    assessments={assessments}/>}
         {tab==="comparison" && <TabComparison assessments={assessments}/>}
         {tab==="benchmarks" && <TabBenchmarks/>}
-        {tab==="users"      && <TabUsers/>}
+        {tab==="users"      && <TabUsers currentUserId={currentUserId}/>}
       </PageWrap>
     </div>
   );
