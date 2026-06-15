@@ -1,20 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Settings, Database, Users, ChevronDown,
-  BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw, AlertCircle,
+  BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw,
 } from "lucide-react";
 import { C, FONT, card, btnPrimary, btnSecondary } from "../constants.js";
 import { Tag, PageWrap, Nav } from "../components.jsx";
-import { useApp, ROLES } from "../AppContext.jsx";
-import { LOB_OPTIONS } from "../benchmarkData.js";
-import { MOCK_ASSESSMENTS, getMockStats, getLensAverages, LENS_LABELS, LENS_KEYS } from "../mockData.js";
-import { listAllAssessments, listAllUsers, updateUserRole } from "../lib/progressDB.js";
-
+import { useApp } from "../AppContext.jsx";
 import { BENCHMARK_DATA } from "../benchmarkData.js";
-import {
-  BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_LABEL, BENCH_LOB_SHORT,
-  isHigherBetter, getBenchForTier,
-} from "../benchmarkHelpers.js";
+import { MOCK_ASSESSMENTS, LENS_LABELS, LENS_KEYS } from "../mockData.js";
+import { listAllAssessments, listAllUsers, updateUserRole } from "../lib/progressDB.js";
+import { isHigherBetter, getBenchForTier, BENCH_LOB_LABEL } from "../benchmarkHelpers.js";
 // ── Shared constants ─────────────────────────────────────────
 const MATURITY_COLOR = { Leading:"#166534", Advanced:"#1a4731", Developing:"#92400e", Foundational:"#991b1b" };
 const MATURITY_BG    = { Leading:"#f0f7f3", Advanced:"#f0f7f3", Developing:"#fef3c7", Foundational:"#fee2e2" };
@@ -256,7 +251,7 @@ function AssessmentDetail({ a, onBack }) {
       {/* No results yet for in-progress */}
       {a.status!=="complete"&&(
         <div style={{...card,padding:"32px",textAlign:"center",marginBottom:18}}>
-          <AlertCircle size={24} color="#92400e" style={{marginBottom:8}}/>
+          <span style={{fontSize:24,marginBottom:8,display:"block"}}>⚠️</span>
           <div style={{fontFamily:FONT.serif,fontSize:15,fontWeight:700,color:C.text,marginBottom:6}}>Assessment In Progress</div>
           <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>This assessment hasn't been completed yet. Scores will appear once the consultant finishes and views results.</div>
         </div>
