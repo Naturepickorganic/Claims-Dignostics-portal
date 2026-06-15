@@ -364,3 +364,22 @@ export async function saveBenchmarkOverride(lob, metricName, tier, bench) {
     }, { onConflict: "lob,metric_name,tier" });
   return { error };
 }
+
+// ── User management (admin only) ──────────────────────────────────────────────
+export async function listAllUsers() {
+  if (!SUPABASE_ENABLED) return { users: [], error: null };
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, full_name, role, created_at")
+    .order("created_at", { ascending: false });
+  return { users: data || [], error };
+}
+
+export async function updateUserRole(userId, newRole) {
+  if (!SUPABASE_ENABLED) return { error: null };
+  const { error } = await supabase
+    .from("profiles")
+    .update({ role: newRole })
+    .eq("id", userId);
+  return { error };
+}
