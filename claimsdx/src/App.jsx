@@ -251,7 +251,7 @@ export default function App() {
       {page===2 && canAccess(2) && <Page2 onNext={()=>setPage(3)} onBack={()=>setPage(1)} onCarrierInfo={setCarrierInfo} initialData={carrierInfo} />}
       {page===3 && canAccess(3) && <Page3 onNext={handlePathSelect} onBack={()=>setPage(2)} />}
       {page===4 && canAccess(4) && <Page4
-          onNext={()=>{ saveProgress({ page:5, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData }); setPage(5); }}
+          onNext={(vals)=>{ const md=vals||metricsData; setMetricsData(md); saveProgress({ page:5, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData:md }); setPage(5); }}
           onBack={()=>setPage(3)}
           onDataChange={(vals)=>{ setMetricsData(vals); }}
           onSave={(vals)=>saveProgress({ page:4, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData:vals })}
