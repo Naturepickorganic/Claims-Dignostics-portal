@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, Download, RotateCcw, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, card, SAMPLE_SCORES, LENS_COLORS } from "../constants.js";
 import { Tag, ScoreRing, GapBadge, PageWrap } from "../components.jsx";
+import { loadAssessmentMetrics } from "../lib/progressDB.js";
 import { useApp } from "../AppContext.jsx";
 import { BENCHMARK_DATA } from "../benchmarkData.js";
 import {
@@ -803,17 +804,32 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
 
   const { completeAssessment, benchmarkOverrides } = useApp();
 
-  const hasMetrics  = metricsData  && Object.keys(metricsData).length > 0;
+  // Fix #12: load metric responses from DB for read-only Benchmark tab
+  const [readOnlyMetrics, setReadOnlyMetrics] = useState({});
+  useEffect(() => {
+    if (readOnly && assessment?.assessment_id) {
+      loadAssessmentMetrics(assessment.assessment_id).then(({ metricsData: md }) => {
+        if (md && Object.keys(md).length > 0) setReadOnlyMetrics(md);
+      });
+    }
+  }, [readOnly, assessment?.assessment_id]);
+
+  // Effective metrics: use live data in active session, DB-loaded data in read-only
+  const effectiveMetrics = readOnly
+    ? (Object.keys(readOnlyMetrics).length > 0 ? readOnlyMetrics : metricsData || {})
+    : (metricsData || {});
+
+  const hasMetrics  = effectiveMetrics && Object.keys(effectiveMetrics).length > 0;
   const hasMaturity = maturityScores && Object.keys(maturityScores).length > 0;
   const hasRealData = hasMetrics || hasMaturity;
 
   // Compute lens scores from real data
   const lensScores = useMemo(()=>{
     if (readOnly && assessment?.lens_scores) return assessment.lens_scores;
-    if (hasMetrics)  return computeScoresFromMetrics(metricsData, carrierInfo, benchmarkOverrides);
+    if (hasMetrics)  return computeScoresFromMetrics(effectiveMetrics, carrierInfo, benchmarkOverrides);
     if (hasMaturity) return computeScoresFromMaturity(maturityScores);
     return {};
-  }, [metricsData, maturityScores, readOnly, assessment]);
+  }, [effectiveMetrics, maturityScores, readOnly, assessment]);
 
   const displayScores = useMemo(()=>buildDisplayScores(lensScores), [lensScores]);
 
@@ -1024,7 +1040,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
 
       {tab==="comparative" && <TabComparative displayScores={displayScores} valueOpps={valueOpps}/>}
       {tab==="overview"    && <TabOverview displayScores={displayScores}/>}
-      {tab==="benchmarks"  && <TabBenchmarks metricsData={metricsData} carrierInfo={carrierInfo}/>}
+      {tab==="benchmarks"  && <TabBenchmarks metricsData={effectiveMetrics} carrierInfo={carrierInfo}/>}
       {tab==="process"     && <TabProcessResults maturityScores={maturityScores||{}}/>}
       {tab==="findings"    && <TabFindings displayScores={displayScores}/>}
       {tab==="priorities"  && <TabRoadmap displayScores={displayScores} valueOpps={valueOpps}/>}
