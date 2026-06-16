@@ -30,13 +30,18 @@ export default function Page1({ onNext, role }) {
             A structured diagnostic framework that benchmarks your claims operation across five value lenses — identifying gaps, quantifying opportunity, and prioritising the highest-ROI modernisation initiatives.
           </p>
 
-          <div style={{ display: "flex", gap: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <button onClick={onNext} style={{ ...btnPrimary, padding: "13px 32px", fontSize: 15, borderRadius: 6 }}>
+              Begin Assessment <ArrowRight size={16} />
+            </button>
+            <div style={{ display: "flex", gap: 20 }}>
               {[["~25 min", "to complete"], ["190+", "benchmark metrics"], ["5", "value lenses"]].map(([v, l]) => (
                 <div key={l}>
                   <div style={{ fontFamily: FONT.mono, fontSize: 16, fontWeight: 700, color: "#1a4731" }}>{v}</div>
                   <div style={{ fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>{l}</div>
                 </div>
               ))}
+            </div>
           </div>
         </div>
       </div>
@@ -90,7 +95,7 @@ export default function Page1({ onNext, role }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 0 }}>
             {[
               { n: "1", title: "Enter Carrier Info",       body: "Provide basic carrier details, tier, and lines of business." },
-              { n: "2", title: "Choose Your Path",         body: "Metrics-based KPI input or process maturity questionnaire." },
+              { n: "2", title: "Choose Your Path",         body: "Enter performance metric values or score process maturity — you pick the approach that fits your data." },
               { n: "3", title: "Input Your Data",          body: "Enter actuals — benchmarks populate automatically." },
               { n: "4", title: "Review Your Results",      body: "Radar view, benchmark spectrum, findings and roadmap." },
             ].map((step, i, arr) => (
