@@ -383,3 +383,27 @@ export async function updateUserRole(userId, newRole) {
     .eq("id", userId);
   return { error };
 }
+
+// ── Load metric data for read-only results view (#12 fix) ─────────────────────
+// Fetches individual metric responses so Benchmark tab works in read-only mode
+export async function loadAssessmentMetrics(assessmentId) {
+  if (!SUPABASE_ENABLED) return { metricsData: {}, carrierInfo: null, error: null };
+
+  const { data, error } = await supabase
+    .from("assessment_metric_responses")
+    .select("lob, metric_name, org_value, tier")
+    .eq("assessment_id", assessmentId);
+
+  if (error || !data) return { metricsData: {}, carrierInfo: null, error };
+
+  // Rebuild the metricsData key format: "{lobKey}:{metricName}"
+  const metricsData = {};
+  data.forEach(row => {
+    if (row.org_value !== null && row.org_value !== undefined) {
+      const key = `${row.lob}:${row.metric_name}`;
+      metricsData[key] = String(row.org_value);
+    }
+  });
+
+  return { metricsData, error: null };
+}
