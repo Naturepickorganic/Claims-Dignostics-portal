@@ -57,7 +57,7 @@ function SaveToast({ show }) {
   );
 }
 
-export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLobs=[], carrierTier=2 }) {
+export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLobs=[], carrierTier=2, metricsData={} }) {
   const { benchmarkOverrides } = useApp();
   const tierColor = TIER_COLOR[carrierTier] || "#1a4731";
 
@@ -67,7 +67,14 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
 
   const [activeLobIdx, setActiveLobIdx] = useState(0);
   const [activeCat,    setActiveCat]    = useState(BENCH_CATS[0]);
-  const [values,       setValues]       = useState({});
+  const [values,       setValues]       = useState(() => metricsData && Object.keys(metricsData).length > 0 ? metricsData : {});
+
+  // Sync values when metricsData changes (e.g. on resume from Dashboard)
+  useEffect(() => {
+    if (metricsData && Object.keys(metricsData).length > 0) {
+      setValues(metricsData);
+    }
+  }, [JSON.stringify(metricsData)]);
   const [showToast,    setShowToast]    = useState(false);
   const [lastSaved,    setLastSaved]    = useState(null);
   const toastRef = useRef(null);
@@ -113,7 +120,7 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
       setActiveLobIdx(i => i+1);
       setActiveCat(BENCH_CATS[0]);
     } else {
-      onNext();
+      onNext(values);
     }
     window.scrollTo(0, 0);
   };
