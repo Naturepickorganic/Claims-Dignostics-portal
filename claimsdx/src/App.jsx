@@ -16,6 +16,7 @@ import Page4 from "./pages/Page4.jsx";
 import Page5 from "./pages/Page5.jsx";
 import Page6 from "./pages/Page6.jsx";
 import Page7 from "./pages/Page7.jsx";
+import Page8 from "./pages/Page8.jsx";
 import { ResumePrompt } from "./SaveProgress.jsx";
 
 // ── Top-level views ───────────────────────────────────────────
@@ -281,9 +282,22 @@ export default function App() {
       )}
       {page===7 && canAccess(7) && (
         <Page7
-          onNext={(scores)=>{ setMaturityScores(scores); saveProgress({ page:5, assessmentPath, carrierInfo, processSelections, maturityScores:scores, metricsData }); setPage(5); }}
+          onNext={(scores)=>{ setMaturityScores(scores); saveProgress({ page:8, assessmentPath, carrierInfo, processSelections, maturityScores:scores, metricsData }); setPage(8); }}
           onBack={()=>setPage(6)}
           processSelections={processSelections}
+        />
+      )}
+
+      {page===8 && (
+        <Page8
+          onBack={()=>setPage(7)}
+          onDashboard={()=>setView("dashboard")}
+          role={role}
+          profile={profile}
+          onAdmin={role==="admin" ? ()=>setView("admin") : null}
+          onLogout={handleLogout}
+          maturityScores={maturityScores}
+          carrierInfo={carrierInfo}
         />
       )}
 
