@@ -1040,7 +1040,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
 
       {tab==="comparative" && <TabComparative displayScores={displayScores} valueOpps={valueOpps}/>}
       {tab==="overview"    && <TabOverview displayScores={displayScores}/>}
-      {tab==="benchmarks"  && <TabBenchmarks metricsData={effectiveMetrics} carrierInfo={carrierInfo}/>}
+      {tab==="benchmarks"  && <BenchmarkTable metricsData={effectiveMetrics} carrierLobs={carrierInfo?.lobs||[]} carrierTier={carrierInfo?.tier||2}/>}
       {tab==="process"     && <TabProcessResults maturityScores={maturityScores||{}}/>}
       {tab==="findings"    && <TabFindings displayScores={displayScores}/>}
       {tab==="priorities"  && <TabRoadmap displayScores={displayScores} valueOpps={valueOpps}/>}
