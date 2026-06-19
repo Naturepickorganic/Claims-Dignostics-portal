@@ -429,3 +429,35 @@ export async function loadAssessmentMetrics(assessmentId) {
 
   return { metricsData, error: null };
 }
+
+// ── Delete an assessment (admin only) ─────────────────────────────────────────
+// Deletes the assessment and all its related rows (results, metric responses,
+// question responses, progress). Relies on ON DELETE CASCADE in the schema,
+// but also explicitly deletes children for safety if cascade isn't configured.
+export async function deleteAssessment(assessmentId) {
+  if (!SUPABASE_ENABLED) return { error: null };
+  if (!assessmentId) return { error: { message: "No assessment id" } };
+
+  // Best-effort delete of child rows first (in case cascade isn't set)
+  const childTables = [
+    "assessment_results",
+    "assessment_metric_responses",
+    "assessment_question_responses",
+    "assessment_progress",
+  ];
+  for (const t of childTables) {
+    try {
+      await supabase.from(t).delete().eq("assessment_id", assessmentId);
+    } catch (e) {
+      // ignore — table may not have rows or cascade handles it
+    }
+  }
+
+  // Delete the assessment itself
+  const { error } = await supabase
+    .from("assessments")
+    .delete()
+    .eq("id", assessmentId);
+
+  return { error };
+}
