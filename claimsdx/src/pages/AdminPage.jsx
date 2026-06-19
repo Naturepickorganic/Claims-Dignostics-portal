@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Settings, Database, Users, ChevronDown,
-  BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw,
+  BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw, Trash2, AlertTriangle, X,
 } from "lucide-react";
 import { C, FONT, card, btnPrimary, btnSecondary } from "../constants.js";
 import { Tag, PageWrap, Nav } from "../components.jsx";
 import { useApp } from "../AppContext.jsx";
 import { BENCHMARK_DATA } from "../benchmarkData.js";
 import { MOCK_ASSESSMENTS, LENS_LABELS, LENS_KEYS } from "../mockData.js";
-import { listAllAssessments, listAllUsers, updateUserRole } from "../lib/progressDB.js";
+import { listAllAssessments, listAllUsers, updateUserRole, deleteAssessment } from "../lib/progressDB.js";
 import { isHigherBetter, getBenchForTier, BENCH_LOB_LABEL } from "../benchmarkHelpers.js";
 // ── Shared constants ─────────────────────────────────────────
 const MATURITY_COLOR = { Leading:"#166534", Advanced:"#1a4731", Developing:"#92400e", Foundational:"#991b1b" };
@@ -304,10 +304,29 @@ function AssessmentDetail({ a, onBack }) {
   );
 }
 
-function TabHistory({ assessments }) {
+function TabHistory({ assessments, role, onRefresh }) {
   const [search, setSearch]   = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null); // assessment pending deletion
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+
+  const isAdmin = role === "admin";
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const { error } = await deleteAssessment(deleteTarget.assessment_id);
+    setDeleting(false);
+    if (error) {
+      setDeleteError("Delete failed. You may not have permission, or the record is protected.");
+    } else {
+      setDeleteTarget(null);
+      if (onRefresh) onRefresh(); // reload the list from Supabase
+    }
+  };
 
   // Show ALL statuses (complete + in_progress + archived)
   const filtered = useMemo(()=>{
@@ -349,7 +368,7 @@ function TabHistory({ assessments }) {
       </div>
 
       <div style={{...card,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+        <div style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 60px 90px 70px 70px 110px 120px":"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
           {["Carrier","Tier","Status","Path","Score","Date","Action"].map(h=>(
             <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em"}}>{h}</div>
           ))}
@@ -361,7 +380,7 @@ function TabHistory({ assessments }) {
 
         {filtered.map((a,i)=>(
           <div key={a.assessment_id||i}
-            style={{display:"grid",gridTemplateColumns:"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
+            style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 60px 90px 70px 70px 110px 120px":"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
             onMouseEnter={e=>e.currentTarget.style.background="#f0f7f3"}
             onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"white":"#fafcfa"}
             onClick={()=>setSelected(a)}>
@@ -380,13 +399,65 @@ function TabHistory({ assessments }) {
                 ? "Started "+new Date(a.started_at).toLocaleDateString("en-US",{month:"short",day:"numeric"})
                 : "—"}
             </div>
-            <button onClick={e=>{e.stopPropagation();setSelected(a);}}
-              style={{...btnSecondary,padding:"5px 10px",fontSize:11,borderRadius:4,color:"#1a4731",borderColor:"#c3ddd0",display:"flex",alignItems:"center",gap:4}}>
-              <Eye size={11}/> View
-            </button>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <button onClick={e=>{e.stopPropagation();setSelected(a);}}
+                style={{...btnSecondary,padding:"5px 10px",fontSize:11,borderRadius:4,color:"#1a4731",borderColor:"#c3ddd0",display:"flex",alignItems:"center",gap:4}}>
+                <Eye size={11}/> View
+              </button>
+              {isAdmin && (
+                <button onClick={e=>{e.stopPropagation();setDeleteTarget(a);setDeleteError(null);}}
+                  title="Delete assessment"
+                  style={{padding:"5px 8px",fontSize:11,borderRadius:4,border:"1px solid #fecaca",background:"white",color:"#dc2626",cursor:"pointer",display:"flex",alignItems:"center"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background="#fee2e2";}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="white";}}>
+                  <Trash2 size={12}/>
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Delete confirmation modal — admin only */}
+      {isAdmin && deleteTarget && (
+        <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}
+          onClick={()=>!deleting&&setDeleteTarget(null)}>
+          <div style={{background:"white",borderRadius:12,padding:"28px 30px",width:440,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",borderTop:"4px solid #dc2626"}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <AlertTriangle size={22} color="#dc2626"/>
+              </div>
+              <div>
+                <div style={{fontFamily:FONT.serif,fontSize:18,fontWeight:700,color:C.text,marginBottom:4}}>
+                  Delete this assessment?
+                </div>
+                <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft,lineHeight:1.6}}>
+                  Are you sure you want to delete the assessment for <strong>{deleteTarget.carrier_name||"this carrier"}</strong>?
+                  This permanently removes the assessment and all of its results — <strong>the results cannot be retrieved</strong> once deleted.
+                </div>
+              </div>
+            </div>
+
+            {deleteError && (
+              <div style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"8px 12px",marginBottom:14,fontFamily:FONT.sans,fontSize:12,color:"#991b1b"}}>
+                {deleteError}
+              </div>
+            )}
+
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setDeleteTarget(null)} disabled={deleting}
+                style={{padding:"9px 18px",borderRadius:6,border:"1px solid #d8ebe2",background:"white",color:C.textSoft,fontSize:13,fontFamily:FONT.sans,cursor:deleting?"not-allowed":"pointer",opacity:deleting?0.5:1}}>
+                Cancel
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                style={{padding:"9px 18px",borderRadius:6,border:"none",background:"#dc2626",color:"white",fontSize:13,fontWeight:700,fontFamily:FONT.sans,cursor:deleting?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,opacity:deleting?0.7:1}}>
+                <Trash2 size={13}/> {deleting?"Deleting…":"Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1124,7 +1195,7 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
 
       <PageWrap maxWidth={1160}>
         {tab==="portfolio"  && <TabPortfolio  assessments={assessments}/>}
-        {tab==="history"    && <TabHistory    assessments={assessments}/>}
+        {tab==="history"    && <TabHistory    assessments={assessments} role={role} onRefresh={fetchData}/>}
         {tab==="comparison" && <TabComparison assessments={assessments}/>}
         {tab==="benchmarks" && <TabBenchmarks/>}
         {tab==="users"      && <TabUsers currentUserId={currentUserId}/>}
