@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Nav, AppShell } from "./components.jsx";
+import { Nav, AppShell, AssessmentSidebar } from "./components.jsx";
 import { useApp, ROLE_ACCESS } from "./AppContext.jsx";
 import { Save, Loader } from "lucide-react";
 import { C, FONT } from "./constants.js";
@@ -30,8 +30,11 @@ export default function App() {
   const {
     session, profile, authLoading,
     signOut, role,
-    saveProgress, loadProgress, clearProgress, saveStatus,
+    saveProgress, loadProgress, clearProgress, saveStatus, lastSavedAt,
   } = useApp();
+
+  // Track when this assessment was started (set on first entry to page 2+)
+  const [assessmentStartedAt, setAssessmentStartedAt] = useState(null);
 
   // ── View routing ─────────────────────────────────────────────
   // Admin → dashboard hub; consultant/sales → start at assessment (Page1)
@@ -84,6 +87,7 @@ export default function App() {
   };
 
   const startNewAssessment = (prefill = null) => {
+    setAssessmentStartedAt(new Date().toISOString());
     if (prefill?.carrier_name) {
       // Clone — pre-fill carrier info
       setCarrierInfo({
@@ -237,43 +241,54 @@ export default function App() {
 
   // ── Process Results (standalone — must be before assessment flow wrapper) ──
   if (page === 8) return (
-    <>
-      <Nav
+    <div style={{ display:"flex", minHeight:"100vh", background:C.bg }}>
+      <AssessmentSidebar
         page={8}
         setPage={(p) => { canAccess(p) && setPage(p); }}
         role={role}
         profile={profile}
-        onAdmin={role==="admin" ? ()=>setView("admin") : null}
         onLogout={handleLogout}
-        onDashboard={() => setView("dashboard")}
-      />
-      <Page8
-        onBack={()=>setPage(7)}
-        onDashboard={()=>setView("dashboard")}
-        maturityScores={maturityScores}
+        onExitToDashboard={() => setView("dashboard")}
+        collapsed={sidebarCollapsed}
+        onToggle={()=>setSidebarCollapsed(c=>!c)}
         carrierInfo={carrierInfo}
+        startedAt={assessmentStartedAt}
+        lastWorkedAt={lastSavedAt}
       />
-    </>
+      <div style={{ flex:1, minWidth:0 }}>
+        <Page8
+          onBack={()=>setPage(7)}
+          onDashboard={()=>setView("dashboard")}
+          maturityScores={maturityScores}
+          carrierInfo={carrierInfo}
+        />
+      </div>
+    </div>
   );
 
   // ── Assessment flow ───────────────────────────────────────────
   const showSaveBtn = role !== "sales" && page > 1 && page < 8;
 
   return (
-    <div style={{ background:C.bg, minHeight:"100vh" }}>
-      <Nav
+    <div style={{ display:"flex", minHeight:"100vh", background:C.bg }}>
+      <AssessmentSidebar
         page={page}
         setPage={(p) => { canAccess(p) && setPage(p); }}
         role={role}
         profile={profile}
-        onAdmin={role==="admin" ? ()=>setView("admin") : null}
         onLogout={handleLogout}
-        onDashboard={() => setView("dashboard")}
+        onExitToDashboard={() => setView("dashboard")}
+        collapsed={sidebarCollapsed}
+        onToggle={()=>setSidebarCollapsed(c=>!c)}
+        carrierInfo={carrierInfo}
+        startedAt={assessmentStartedAt}
+        lastWorkedAt={lastSavedAt}
       />
+      <div style={{ flex:1, minWidth:0, position:"relative" }}>
 
       {/* Floating save button */}
       {showSaveBtn && (
-        <div style={{ position:"fixed", top:70, right:18, zIndex:100 }}>
+        <div style={{ position:"fixed", top:18, right:18, zIndex:100 }}>
           <button onClick={handleSave} style={{
             display:"flex", alignItems:"center", gap:6,
             padding:"6px 13px", borderRadius:6, fontSize:11, fontWeight:600,
@@ -336,6 +351,7 @@ export default function App() {
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     </div>
   );
 }
