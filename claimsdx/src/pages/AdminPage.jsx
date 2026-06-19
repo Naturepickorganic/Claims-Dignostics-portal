@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   Settings, Database, Users, ChevronDown,
   BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw, Trash2, AlertTriangle, X,
@@ -368,8 +369,8 @@ function TabHistory({ assessments, role, onRefresh }) {
       </div>
 
       <div style={{...card,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 60px 90px 70px 70px 110px 120px":"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
-          {["Carrier","Tier","Status","Path","Score","Date","Action"].map(h=>(
+        <div style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 50px 84px 64px 56px 96px 96px 110px":"2fr 50px 84px 64px 56px 96px 96px 70px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+          {["Carrier","Tier","Status","Path","Score","Start Date","End Date","Action"].map(h=>(
             <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em"}}>{h}</div>
           ))}
         </div>
@@ -380,7 +381,7 @@ function TabHistory({ assessments, role, onRefresh }) {
 
         {filtered.map((a,i)=>(
           <div key={a.assessment_id||i}
-            style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 60px 90px 70px 70px 110px 120px":"2fr 60px 90px 70px 70px 110px 80px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
+            style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 50px 84px 64px 56px 96px 96px 110px":"2fr 50px 84px 64px 56px 96px 96px 70px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
             onMouseEnter={e=>e.currentTarget.style.background="#f0f7f3"}
             onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"white":"#fafcfa"}
             onClick={()=>setSelected(a)}>
@@ -393,10 +394,13 @@ function TabHistory({ assessments, role, onRefresh }) {
             <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textSoft,textTransform:"capitalize"}}>{a.path||"—"}</div>
             <div>{a.overall_score?<ScoreChip score={a.overall_score} ml={null}/>:<span style={{color:C.textMuted,fontSize:11}}>—</span>}</div>
             <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted}}>
+              {a.started_at
+                ? new Date(a.started_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
+                : "—"}
+            </div>
+            <div style={{fontFamily:FONT.sans,fontSize:10,color:a.status==="complete"&&a.completed_at?C.textSoft:C.textMuted}}>
               {a.status==="complete"&&a.completed_at
                 ? new Date(a.completed_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
-                : a.started_at
-                ? "Started "+new Date(a.started_at).toLocaleDateString("en-US",{month:"short",day:"numeric"})
                 : "—"}
             </div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -418,11 +422,11 @@ function TabHistory({ assessments, role, onRefresh }) {
         ))}
       </div>
 
-      {/* Delete confirmation modal — admin only */}
-      {isAdmin && deleteTarget && (
-        <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}
+      {/* Delete confirmation modal — admin only — portaled to body so it always centers in viewport */}
+      {isAdmin && deleteTarget && createPortal(
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:99999,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}
           onClick={()=>!deleting&&setDeleteTarget(null)}>
-          <div style={{background:"white",borderRadius:12,padding:"28px 30px",width:440,boxShadow:"0 20px 60px rgba(0,0,0,0.25)",borderTop:"4px solid #dc2626"}}
+          <div style={{background:"white",borderRadius:12,padding:"28px 30px",width:440,maxWidth:"90vw",boxShadow:"0 20px 60px rgba(0,0,0,0.25)",borderTop:"4px solid #dc2626"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:16}}>
               <div style={{width:42,height:42,borderRadius:"50%",background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -456,7 +460,8 @@ function TabHistory({ assessments, role, onRefresh }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
