@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, AlertTriangle, Lightbulb, Target } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, card } from "../constants.js";
 import { Tag } from "../components.jsx";
 import { QUESTIONS_DATA } from "../questionsData.js";
@@ -129,6 +129,138 @@ function RadarChart({ domainScores }) {
   );
 }
 
+
+// ── Priority Matrix — SVG scatter chart ─────────────────────────────────────
+function PriorityMatrix({ l2All }) {
+  const DOMAIN_COLORS = {
+    "Initial claims processing":       "#1a4731",
+    "Claims review and investigation": "#2563EB",
+    "Fraud detection and management":  "#DC2626",
+    "Claims adjustment and disbursal": "#D97706",
+    "Litigation and subrogation":      "#7C3AED",
+  };
+  const DOMAIN_SHORT = {
+    "Initial claims processing":       "Initial",
+    "Claims review and investigation": "Review",
+    "Fraud detection and management":  "Fraud",
+    "Claims adjustment and disbursal": "Adjustment",
+    "Litigation and subrogation":      "Litigation",
+  };
+
+  // Chart geometry
+  const ML=70, MR=24, MT=28, MB=64;
+  const PW=470, PH=260;
+  const W=ML+PW+MR, H=MT+PH+MB;
+  const midX=ML+PW/2, midY=MT+PH/2;
+
+  // Map l2 groups to x/y coords
+  // X = Effort        = 100 - g.proc  (low proc → high effort → right)
+  // Y = Benefit       = clamp(0, (80 - g.avg) * 1.25, 100)  (big gap → high benefit → top)
+  const items = l2All.map((g, idx) => {
+    const effort  = Math.min(100, Math.max(5,  100 - g.proc));
+    const benefit = Math.min(100, Math.max(5,  (80 - g.avg) * 1.2));
+    const x = ML + (effort  / 100) * PW;
+    const y = MT + PH - (benefit / 100) * PH;   // invert: high benefit = top
+    const col = DOMAIN_COLORS[g.domain] || "#64748B";
+    // smart label side: right if left half, else left
+    const anchor = x > ML + PW * 0.6 ? "end" : "start";
+    const lx     = anchor === "start" ? x + 9 : x - 9;
+    // smart label vertical: below if top 30%, else above
+    const ly     = y < MT + PH * 0.3 ? y + 16 : y - 8;
+    return { ...g, x, y, col, anchor, lx, ly, idx };
+  });
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", maxWidth: W, display:"block" }}>
+
+      {/* Quadrant backgrounds */}
+      <rect x={ML}      y={MT}       width={PW/2} height={PH/2} fill="#FFFDF0" opacity={0.6}/>
+      <rect x={ML+PW/2} y={MT}       width={PW/2} height={PH/2} fill="#EFF6FF" opacity={0.6}/>
+      <rect x={ML}      y={MT+PH/2}  width={PW/2} height={PH/2} fill="#F0FDF4" opacity={0.6}/>
+      <rect x={ML+PW/2} y={MT+PH/2}  width={PW/2} height={PH/2} fill="#F8FAFC" opacity={0.6}/>
+
+      {/* Outer border */}
+      <rect x={ML} y={MT} width={PW} height={PH} fill="none" stroke="#E2E8F0" strokeWidth={1}/>
+
+      {/* Quadrant dividers */}
+      <line x1={midX} y1={MT}    x2={midX}    y2={MT+PH} stroke="#CBD5E1" strokeWidth={1.5} strokeDasharray="6 4"/>
+      <line x1={ML}   y1={midY}  x2={ML+PW}   y2={midY}  stroke="#CBD5E1" strokeWidth={1.5} strokeDasharray="6 4"/>
+
+      {/* Subtle grid lines */}
+      {[25,75].map(p => (
+        <g key={p}>
+          <line x1={ML+(p/100)*PW} y1={MT} x2={ML+(p/100)*PW} y2={MT+PH} stroke="#F1F5F9" strokeWidth={1}/>
+          <line x1={ML} y1={MT+(p/100)*PH} x2={ML+PW} y2={MT+(p/100)*PH} stroke="#F1F5F9" strokeWidth={1}/>
+        </g>
+      ))}
+
+      {/* Quadrant labels — faint corner text */}
+      {[
+        { x: ML+8,       y: MT+14,    label: "QUICK WINS",         col: "#D97706" },
+        { x: ML+PW-8,    y: MT+14,    label: "STRATEGIC PRIORITY", col: "#2563EB", anchor: "end" },
+        { x: ML+8,       y: MT+PH-8,  label: "MAINTAIN & SCALE",   col: "#059669" },
+        { x: ML+PW-8,    y: MT+PH-8,  label: "MONITOR",            col: "#94A3B8", anchor: "end" },
+      ].map(q => (
+        <text key={q.label} x={q.x} y={q.y} textAnchor={q.anchor||"start"}
+          fontSize={8} fontWeight={700} letterSpacing="0.1em" fill={q.col} opacity={0.55}
+          fontFamily="Arial">{q.label}</text>
+      ))}
+
+      {/* Y-axis — left */}
+      <line x1={ML} y1={MT} x2={ML} y2={MT+PH} stroke="#94A3B8" strokeWidth={1.5}/>
+      {/* Y arrow */}
+      <polygon points={`${ML},${MT} ${ML-4},${MT+9} ${ML+4},${MT+9}`} fill="#94A3B8"/>
+      {/* Y axis ticks */}
+      <text x={ML-6} y={MT+8}    textAnchor="end" fontSize={9} fill="#64748B" fontFamily="Arial">High</text>
+      <text x={ML-6} y={MT+PH}   textAnchor="end" fontSize={9} fill="#64748B" fontFamily="Arial">Low</text>
+      {/* Y axis title */}
+      <text x={14} y={MT+PH/2} textAnchor="middle" fontSize={10} fontWeight={700}
+        fill="#1B2B4B" fontFamily="Arial"
+        transform={`rotate(-90 14 ${MT+PH/2})`}>Benefit Realization</text>
+
+      {/* X-axis — bottom */}
+      <line x1={ML} y1={MT+PH} x2={ML+PW} y2={MT+PH} stroke="#94A3B8" strokeWidth={1.5}/>
+      {/* X arrow */}
+      <polygon points={`${ML+PW},${MT+PH} ${ML+PW-9},${MT+PH-4} ${ML+PW-9},${MT+PH+4}`} fill="#94A3B8"/>
+      {/* X axis ticks */}
+      <text x={ML}     y={MT+PH+14} textAnchor="middle" fontSize={9} fill="#64748B" fontFamily="Arial">Low</text>
+      <text x={ML+PW}  y={MT+PH+14} textAnchor="middle" fontSize={9} fill="#64748B" fontFamily="Arial">High</text>
+      {/* X axis title */}
+      <text x={ML+PW/2} y={H-8} textAnchor="middle" fontSize={10} fontWeight={700}
+        fill="#1B2B4B" fontFamily="Arial">Effort to Implement</text>
+
+      {/* Data points */}
+      {items.map(item => (
+        <g key={item.l2}>
+          {/* Shadow ring */}
+          <circle cx={item.x} cy={item.y} r={9} fill={item.col} opacity={0.12}/>
+          {/* Outer ring */}
+          <circle cx={item.x} cy={item.y} r={7} fill="white"
+            stroke={item.col} strokeWidth={2}/>
+          {/* Inner fill */}
+          <circle cx={item.x} cy={item.y} r={3.5} fill={item.col}/>
+          {/* Label */}
+          <text x={item.lx} y={item.ly} textAnchor={item.anchor}
+            fontSize={9} fill={item.col} fontWeight={600} fontFamily="Arial"
+            style={{ textShadow: "0 0 3px white" }}>
+            {item.l2.length > 30 ? item.l2.slice(0,30)+"…" : item.l2}
+          </text>
+        </g>
+      ))}
+
+      {/* Legend — domain colors */}
+      {Object.entries(DOMAIN_SHORT).filter(([d]) => l2All.some(g => g.domain === d)).map(([d, short], i) => (
+        <g key={d} transform={`translate(${ML + i * 94}, ${H-16})`}>
+          <circle cx={5} cy={5} r={4} fill="white" stroke={DOMAIN_COLORS[d]} strokeWidth={2}/>
+          <circle cx={5} cy={5} r={2} fill={DOMAIN_COLORS[d]}/>
+          <text x={13} y={9} fontSize={8} fill="#64748B" fontFamily="Arial">{short}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+
 // ── Main Page ───────────────────────────────────────────────────────────────
 export default function Page8({
   onBack,
@@ -206,10 +338,10 @@ export default function Page8({
   const l2All = activeDomains.flatMap(d =>
     domainScores[d].l2Groups.map(g => ({ ...g, domain: d }))
   );
-  const qQuickWins    = l2All.filter(g => g.avg < 60 && (g.proc - g.tech) > 5).slice(0, 4);
-  const qStrategic    = l2All.filter(g => g.avg < 50).slice(0, 4);
+  // chart uses l2All directly — quadrant logic retained for roadmap only
+  const qStrategic    = l2All.filter(g => g.avg < 50);
   const qMaintain     = l2All.filter(g => g.avg >= 80).slice(0, 5);
-  const qDeprioritize = l2All.filter(g => g.avg >= 60 && g.avg < 80 && (g.proc - g.tech) <= 5).slice(0, 3);
+  const qDeprioritize = l2All.filter(g => g.avg >= 60 && g.avg < 80);
 
   // ── Auto-roadmap ─────────────────────────────────────────────────────
   const sorted = [...l2All].sort((a, b) => a.avg - b.avg);
@@ -453,38 +585,19 @@ export default function Page8({
         {/* ── PRIORITY MATRIX + FINDINGS ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}>
 
-          {/* 2×2 Matrix */}
+          {/* Priority Matrix — SVG scatter chart */}
           <div style={BOX}>
             <div style={SH}>
               <div>
                 <div style={{ fontFamily: FONT.serif, fontSize: 14, fontWeight: 700, color: NAV }}>Improvement Priority Matrix</div>
-                <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textMuted, marginTop: 2 }}>Impact vs implementation complexity</div>
+                <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                  Y-axis: Benefit Realization (gap to Best-in-Class) · X-axis: Effort to implement
+                </div>
               </div>
-              <span style={STAG}>2×2</span>
+              <span style={STAG}>Scatter</span>
             </div>
-            <div style={{ padding: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {[
-                  { label: "⚡ Quick Wins",           desc: "High impact · Low effort",     bg: "#FFFBEB", border: "#FDE68A", tc: "#D97706", items: qQuickWins    },
-                  { label: "🎯 Strategic Priorities", desc: "High impact · Higher effort",  bg: "#EFF6FF", border: "#BFDBFE", tc: "#1D4ED8", items: qStrategic    },
-                  { label: "✓ Maintain & Scale",      desc: "Scoring ≥ 80 — leverage",     bg: "#F0FDF4", border: "#BBF7D0", tc: "#059669", items: qMaintain     },
-                  { label: "⏸ Deprioritize",          desc: "Lower gap · Phase-2",         bg: "#F8FAFC", border: "#E2E8F0", tc: "#64748B", items: qDeprioritize },
-                ].map(q => (
-                  <div key={q.label} style={{ background: q.bg, border: `1px solid ${q.border}`, borderRadius: 10, padding: 14, minHeight: 100 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: q.tc, marginBottom: 3 }}>{q.label}</div>
-                    <div style={{ fontSize: 9, color: q.tc, opacity: .7, marginBottom: 10, fontStyle: "italic" }}>{q.desc}</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 4px" }}>
-                      {q.items.length ? q.items.map(g => (
-                        <span key={g.l2} style={{ display: "inline-flex", fontSize: 10, fontWeight: 600, background: "rgba(255,255,255,.85)", border: "1px solid rgba(0,0,0,.08)", borderRadius: 5, padding: "3px 7px", color: q.tc }}>
-                          {g.l2.length > 26 ? g.l2.slice(0, 26) + "…" : g.l2}
-                        </span>
-                      )) : (
-                        <span style={{ fontSize: 10, color: q.tc, opacity: .5, fontStyle: "italic" }}>None identified</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div style={{ padding: "12px 16px 16px" }}>
+              <PriorityMatrix l2All={l2All}/>
             </div>
           </div>
 
@@ -500,26 +613,28 @@ export default function Page8({
             <div style={{ padding: "12px 20px" }}>
               {[
                 worstDomain && {
-                  icon: "⚠️", bg: "#FEF2F2",
+                  Icon: AlertTriangle, iconColor: "#DC2626", bg: "#FEF2F2",
                   title: `${DOMAIN_DISPLAY[worstDomain]?.label} is the critical gap — ${domainScores[worstDomain]?.avg}/100`,
                   body: `This domain has the lowest combined maturity score. Targeted investment here will deliver the highest ROI on maturity improvement. Consider immediate action items from the Priority Matrix above.`,
                   tag: { l: "Critical Gap", c: "#DC2626", bg: "#FEF2F2" },
                 },
                 bestDomain && domainScores[bestDomain]?.avg >= 55 && {
-                  icon: "💡", bg: "#FFFBEB",
+                  Icon: Lightbulb, iconColor: "#D97706", bg: "#FFFBEB",
                   title: `${DOMAIN_DISPLAY[bestDomain]?.label} is your strongest anchor — ${domainScores[bestDomain]?.avg}/100`,
                   body: `This domain shows the highest combined maturity. Document the workflows and tools driving these scores and use them as templates for lower-performing domains.`,
                   tag: { l: "Strength", c: "#059669", bg: "#ECFDF5" },
                 },
                 techGap > 8 && techLagger && {
-                  icon: "🎯", bg: "#EFF6FF",
+                  Icon: Target, iconColor: "#2563EB", bg: "#EFF6FF",
                   title: `Technology lags Process in ${DOMAIN_DISPLAY[techLagger]?.label} (gap: +${techGap}pts)`,
                   body: `Process discipline outpaces enabling technology in this domain. Strong institutional knowledge exists — the priority is technology uplift to automate and scale what practitioners already do well.`,
                   tag: { l: "Tech Uplift", c: "#1D4ED8", bg: "#EFF6FF" },
                 },
               ].filter(Boolean).map((f, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid #f1f5f9" }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: f.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>{f.icon}</div>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: f.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <f.Icon size={15} color={f.iconColor} strokeWidth={2}/>
+                  </div>
                   <div>
                     <div style={{ fontFamily: FONT.sans, fontSize: 12, fontWeight: 700, color: NAV, marginBottom: 3 }}>{f.title}</div>
                     <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textSoft, lineHeight: 1.6 }}>{f.body}</div>
