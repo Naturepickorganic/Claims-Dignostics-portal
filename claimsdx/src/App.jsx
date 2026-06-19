@@ -209,6 +209,27 @@ export default function App() {
     </>
   );
 
+  // ── Process Results (standalone — must be before assessment flow wrapper) ──
+  if (page === 8) return (
+    <>
+      <Nav
+        page={8}
+        setPage={(p) => { canAccess(p) && setPage(p); }}
+        role={role}
+        profile={profile}
+        onAdmin={role==="admin" ? ()=>setView("admin") : null}
+        onLogout={handleLogout}
+        onDashboard={() => setView("dashboard")}
+      />
+      <Page8
+        onBack={()=>setPage(7)}
+        onDashboard={()=>setView("dashboard")}
+        maturityScores={maturityScores}
+        carrierInfo={carrierInfo}
+      />
+    </>
+  );
+
   // ── Assessment flow ───────────────────────────────────────────
   const showSaveBtn = role !== "sales" && page > 1 && page < 8;
 
@@ -285,19 +306,6 @@ export default function App() {
           onNext={(scores)=>{ setMaturityScores(scores); saveProgress({ page:8, assessmentPath, carrierInfo, processSelections, maturityScores:scores, metricsData }); setPage(8); }}
           onBack={()=>setPage(6)}
           processSelections={processSelections}
-        />
-      )}
-
-      {page===8 && (
-        <Page8
-          onBack={()=>setPage(7)}
-          onDashboard={()=>setView("dashboard")}
-          role={role}
-          profile={profile}
-          onAdmin={role==="admin" ? ()=>setView("admin") : null}
-          onLogout={handleLogout}
-          maturityScores={maturityScores}
-          carrierInfo={carrierInfo}
         />
       )}
 
