@@ -3,13 +3,14 @@ import { createPortal } from "react-dom";
 import {
   Settings, Database, Users, ChevronDown,
   BarChart3, TrendingUp, Eye, ArrowLeft, RefreshCw, Trash2, AlertTriangle, X,
+  UserCog, RotateCcw,
 } from "lucide-react";
 import { C, FONT, card, btnPrimary, btnSecondary } from "../constants.js";
 import { Tag, PageWrap, Nav } from "../components.jsx";
 import { useApp } from "../AppContext.jsx";
 import { BENCHMARK_DATA } from "../benchmarkData.js";
 import { MOCK_ASSESSMENTS, LENS_LABELS, LENS_KEYS } from "../mockData.js";
-import { listAllAssessments, listAllUsers, updateUserRole, deleteAssessment } from "../lib/progressDB.js";
+import { listAllAssessments, listAllUsers, updateUserRole, deleteAssessment, reassignAssessment } from "../lib/progressDB.js";
 import { isHigherBetter, getBenchForTier, BENCH_LOB_LABEL } from "../benchmarkHelpers.js";
 // ── Shared constants ─────────────────────────────────────────
 const MATURITY_COLOR = { Leading:"#166534", Advanced:"#1a4731", Developing:"#92400e", Foundational:"#991b1b" };
@@ -305,13 +306,17 @@ function AssessmentDetail({ a, onBack }) {
   );
 }
 
-function TabHistory({ assessments, role, onRefresh }) {
+function TabHistory({ assessments, role, onRefresh, allUsers = [], currentUserId, onResumeAssessment }) {
   const [search, setSearch]   = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null); // assessment pending deletion
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
+  const [reassignTarget, setReassignTarget] = useState(null); // assessment pending reassignment
+  const [reassignTo, setReassignTo] = useState("");
+  const [reassigning, setReassigning] = useState(false);
+  const [reassignError, setReassignError] = useState(null);
 
   const isAdmin = role === "admin";
 
@@ -328,6 +333,24 @@ function TabHistory({ assessments, role, onRefresh }) {
       if (onRefresh) onRefresh(); // reload the list from Supabase
     }
   };
+
+  const handleReassign = async () => {
+    if (!reassignTarget || !reassignTo) return;
+    setReassigning(true);
+    setReassignError(null);
+    const { error } = await reassignAssessment(reassignTarget.assessment_id, reassignTo);
+    setReassigning(false);
+    if (error) {
+      setReassignError("Reassignment failed. You may not have permission to reassign this assessment.");
+    } else {
+      setReassignTarget(null);
+      setReassignTo("");
+      if (onRefresh) onRefresh();
+    }
+  };
+
+  // Consultants/admins available as reassignment targets
+  const assignableUsers = (allUsers || []).filter(u => u.role === "consultant" || u.role === "admin");
 
   // Show ALL statuses (complete + in_progress + archived)
   const filtered = useMemo(()=>{
@@ -369,8 +392,8 @@ function TabHistory({ assessments, role, onRefresh }) {
       </div>
 
       <div style={{...card,overflow:"hidden"}}>
-        <div style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 50px 84px 64px 56px 96px 96px 110px":"2fr 50px 84px 64px 56px 96px 96px 70px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
-          {["Carrier","Tier","Status","Path","Score","Start Date","End Date","Action"].map(h=>(
+        <div style={{display:"grid",gridTemplateColumns:isAdmin?"1.5fr 42px 76px 54px 46px 82px 82px 92px 200px":"1.7fr 42px 76px 54px 46px 82px 82px 92px 76px",gap:8,padding:"10px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731"}}>
+          {["Carrier","Tier","Status","Path","Score","Start Date","End Date","Last Worked","Action"].map(h=>(
             <div key={h} style={{fontFamily:FONT.sans,fontSize:10,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em"}}>{h}</div>
           ))}
         </div>
@@ -381,7 +404,7 @@ function TabHistory({ assessments, role, onRefresh }) {
 
         {filtered.map((a,i)=>(
           <div key={a.assessment_id||i}
-            style={{display:"grid",gridTemplateColumns:isAdmin?"2fr 50px 84px 64px 56px 96px 96px 110px":"2fr 50px 84px 64px 56px 96px 96px 70px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
+            style={{display:"grid",gridTemplateColumns:isAdmin?"1.5fr 42px 76px 54px 46px 82px 82px 92px 200px":"1.7fr 42px 76px 54px 46px 82px 82px 92px 76px",gap:8,padding:"13px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center",cursor:"pointer",transition:"background 0.1s"}}
             onMouseEnter={e=>e.currentTarget.style.background="#f0f7f3"}
             onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"white":"#fafcfa"}
             onClick={()=>setSelected(a)}>
@@ -403,11 +426,37 @@ function TabHistory({ assessments, role, onRefresh }) {
                 ? new Date(a.completed_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
                 : "—"}
             </div>
+            <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted}}>
+              {a.last_worked_at
+                ? new Date(a.last_worked_at).toLocaleDateString("en-US",{month:"short",day:"numeric"})+" "+new Date(a.last_worked_at).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})
+                : "—"}
+            </div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {a.status==="in_progress" && onResumeAssessment && (
+                <button onClick={e=>{e.stopPropagation();onResumeAssessment({
+                  page: a.last_page || 2,
+                  assessmentPath: a.path,
+                  carrierInfo: { name:a.carrier_name, naic:a.naic, tier:a.tier, lobs:a.lobs },
+                  assessment_id: a.assessment_id,
+                });}}
+                  title="Resume this assessment"
+                  style={{padding:"5px 9px",fontSize:11,borderRadius:4,border:"none",background:"#1a4731",color:"white",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontWeight:600}}>
+                  <RotateCcw size={11}/> Resume
+                </button>
+              )}
               <button onClick={e=>{e.stopPropagation();setSelected(a);}}
                 style={{...btnSecondary,padding:"5px 10px",fontSize:11,borderRadius:4,color:"#1a4731",borderColor:"#c3ddd0",display:"flex",alignItems:"center",gap:4}}>
                 <Eye size={11}/> View
               </button>
+              {isAdmin && a.status==="in_progress" && (
+                <button onClick={e=>{e.stopPropagation();setReassignTarget(a);setReassignTo("");setReassignError(null);}}
+                  title="Reassign to another consultant"
+                  style={{padding:"5px 8px",fontSize:11,borderRadius:4,border:"1px solid #c3ddd0",background:"white",color:"#1a4731",cursor:"pointer",display:"flex",alignItems:"center"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background="#f0f7f3";}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="white";}}>
+                  <UserCog size={12}/>
+                </button>
+              )}
               {isAdmin && (
                 <button onClick={e=>{e.stopPropagation();setDeleteTarget(a);setDeleteError(null);}}
                   title="Delete assessment"
@@ -457,6 +506,65 @@ function TabHistory({ assessments, role, onRefresh }) {
               <button onClick={handleDelete} disabled={deleting}
                 style={{padding:"9px 18px",borderRadius:6,border:"none",background:"#dc2626",color:"white",fontSize:13,fontWeight:700,fontFamily:FONT.sans,cursor:deleting?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,opacity:deleting?0.7:1}}>
                 <Trash2 size={13}/> {deleting?"Deleting…":"Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Reassign modal — admin only — portaled to body */}
+      {isAdmin && reassignTarget && createPortal(
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:99999,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}
+          onClick={()=>!reassigning&&setReassignTarget(null)}>
+          <div style={{background:"white",borderRadius:12,padding:"28px 30px",width:460,maxWidth:"90vw",boxShadow:"0 20px 60px rgba(0,0,0,0.25)",borderTop:"4px solid #1a4731"}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:18}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:"#f0f7f3",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <UserCog size={22} color="#1a4731"/>
+              </div>
+              <div>
+                <div style={{fontFamily:FONT.serif,fontSize:18,fontWeight:700,color:C.text,marginBottom:4}}>
+                  Reassign assessment
+                </div>
+                <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft,lineHeight:1.6}}>
+                  Hand off the in-progress assessment for <strong>{reassignTarget.carrier_name||"this carrier"}</strong> to another consultant. All saved progress is preserved — the new owner can resume from where it was left off.
+                </div>
+              </div>
+            </div>
+
+            <label style={{display:"block",fontFamily:FONT.sans,fontSize:11,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",marginBottom:6}}>
+              Assign to
+            </label>
+            <select value={reassignTo} onChange={e=>setReassignTo(e.target.value)}
+              style={{width:"100%",padding:"10px 12px",border:"1px solid #d8ebe2",borderRadius:6,fontFamily:FONT.sans,fontSize:13,outline:"none",marginBottom:6,background:"white",cursor:"pointer"}}>
+              <option value="">Select a consultant…</option>
+              {assignableUsers
+                .filter(u => u.id !== reassignTarget.user_id)
+                .map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name || u.email} ({u.role})
+                  </option>
+                ))}
+            </select>
+            <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,marginBottom:16}}>
+              Currently owned by: {reassignTarget.consultant_name || "—"}
+            </div>
+
+            {reassignError && (
+              <div style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:6,padding:"8px 12px",marginBottom:14,fontFamily:FONT.sans,fontSize:12,color:"#991b1b"}}>
+                {reassignError}
+              </div>
+            )}
+
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setReassignTarget(null)} disabled={reassigning}
+                style={{padding:"9px 18px",borderRadius:6,border:"1px solid #d8ebe2",background:"white",color:C.textSoft,fontSize:13,fontFamily:FONT.sans,cursor:reassigning?"not-allowed":"pointer",opacity:reassigning?0.5:1}}>
+                Cancel
+              </button>
+              <button onClick={handleReassign} disabled={reassigning||!reassignTo}
+                style={{padding:"9px 18px",borderRadius:6,border:"none",background:reassignTo?"#1a4731":"#9cb5a8",color:"white",fontSize:13,fontWeight:700,fontFamily:FONT.sans,cursor:(reassigning||!reassignTo)?"not-allowed":"pointer",display:"flex",alignItems:"center",gap:6,opacity:reassigning?0.7:1}}>
+                <UserCog size={13}/> {reassigning?"Reassigning…":"Reassign"}
               </button>
             </div>
           </div>
@@ -1117,11 +1225,12 @@ const TABS = [
   { id:"users",      label:"User Roles",         Icon:Users      },
 ];
 
-export default function AdminPage({ onBack, role, profile, onLogout }) {
+export default function AdminPage({ onBack, role, profile, onLogout, onResumeAssessment, embedded }) {
   const { supabaseEnabled, session } = useApp();
   const currentUserId = session?.user?.id;
   const [tab, setTab]           = useState("portfolio");
   const [assessments, setAssessments] = useState(MOCK_ASSESSMENTS); // default to mock
+  const [allUsers, setAllUsers] = useState([]); // for reassign dropdown
   const [loading, setLoading]   = useState(false);
   const [usingReal, setUsingReal] = useState(false);
   const [lastFetch, setLastFetch] = useState(null);
@@ -1140,6 +1249,11 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
         setAssessments(real || []);
         setUsingReal(true);
       }
+      // Load users for the reassign dropdown (best-effort)
+      try {
+        const { users: u } = await listAllUsers();
+        if (u) setAllUsers(u);
+      } catch (e) { /* non-fatal */ }
     } catch (e) {
       console.error("Failed to load assessments:", e);
       setUsingReal(false);
@@ -1152,8 +1266,10 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
 
   return (
     <div style={{background:C.bg,minHeight:"100vh"}}>
-      <Nav page={0} setPage={()=>{}} role={role} profile={profile}
-        onAdmin={null} onLogout={onLogout} onDashboard={onBack}/>
+      {!embedded && (
+        <Nav page={0} setPage={()=>{}} role={role} profile={profile}
+          onAdmin={null} onLogout={onLogout} onDashboard={onBack}/>
+      )}
 
       <div style={{background:"white",borderBottom:"1px solid #d8ebe2"}}>
         <div style={{maxWidth:1160,margin:"0 auto",padding:"20px 28px 0",display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
@@ -1200,7 +1316,7 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
 
       <PageWrap maxWidth={1160}>
         {tab==="portfolio"  && <TabPortfolio  assessments={assessments}/>}
-        {tab==="history"    && <TabHistory    assessments={assessments} role={role} onRefresh={fetchData}/>}
+        {tab==="history"    && <TabHistory    assessments={assessments} role={role} onRefresh={fetchData} allUsers={allUsers} currentUserId={currentUserId} onResumeAssessment={onResumeAssessment}/>}
         {tab==="comparison" && <TabComparison assessments={assessments}/>}
         {tab==="benchmarks" && <TabBenchmarks/>}
         {tab==="users"      && <TabUsers currentUserId={currentUserId}/>}
