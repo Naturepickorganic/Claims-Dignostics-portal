@@ -519,3 +519,155 @@ export function AppShell({ active, role, profile, onNavigate, onLogout, sidebarC
     </div>
   );
 }
+
+// ─── AssessmentSidebar (vertical step progression during an assessment) ───────
+export function AssessmentSidebar({
+  page, setPage, role, profile, onLogout, onExitToDashboard,
+  collapsed, onToggle, carrierInfo, startedAt, lastWorkedAt, completedAt,
+}) {
+  // Steps mirror the assessment flow. Sales sees a reduced set.
+  const STEPS = role === "sales"
+    ? [
+        { label: "Welcome",         p: 1, Icon: Home },
+        { label: "Carrier",         p: 2, Icon: Building2 },
+        { label: "Metrics Results", p: 5, Icon: ClipboardCheck },
+      ]
+    : [
+        { label: "Welcome",            p: 1, Icon: Home },
+        { label: "Carrier",            p: 2, Icon: Building2 },
+        { label: "Path",               p: 3, Icon: GitBranch },
+        { label: "Metrics",            p: 4, Icon: BarChart2 },
+        { label: "Metrics Results",    p: 5, Icon: ClipboardCheck },
+        { label: "Process",            p: 6, Icon: List },
+        { label: "Process Assessment", p: 7, Icon: ClipboardList },
+        { label: "Process Results",    p: 8, Icon: Award },
+      ];
+
+  const W = collapsed ? 64 : 248;
+  const initial = (profile?.full_name || profile?.email || "U").charAt(0).toUpperCase();
+
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "—";
+  const fmtDateTime = (d) => d ? new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric"})+" "+new Date(d).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}) : "—";
+
+  return (
+    <aside style={{
+      width: W, minWidth: W, height: "100vh", position: "sticky", top: 0,
+      background: "#13301f", color: "white", display: "flex", flexDirection: "column",
+      transition: "width 0.18s ease", flexShrink: 0, zIndex: 40,
+    }}>
+      {/* Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "18px 0" : "18px 20px", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.serif, fontWeight: 800, fontSize: 14, color: "white", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>VM</div>
+        {!collapsed && (
+          <div>
+            <div style={{ fontFamily: FONT.serif, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>ClaimsDx</div>
+            <div style={{ fontFamily: FONT.sans, fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", marginTop: 2 }}>ASSESSMENT</div>
+          </div>
+        )}
+      </div>
+
+      {/* Carrier context */}
+      {!collapsed && carrierInfo?.name && (
+        <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ fontFamily: FONT.sans, fontSize: 9, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Assessing</div>
+          <div style={{ fontFamily: FONT.serif, fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{carrierInfo.name}</div>
+          {carrierInfo.tier && <div style={{ fontFamily: FONT.sans, fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Tier {carrierInfo.tier}{carrierInfo.lobs?.length?` · ${carrierInfo.lobs.length} LOB${carrierInfo.lobs.length>1?"s":""}`:""}</div>}
+        </div>
+      )}
+
+      {/* Step progression */}
+      <nav style={{ flex: 1, padding: "12px 10px", display: "flex", flexDirection: "column", gap: 2, overflowY: "auto" }}>
+        {STEPS.map((s, i) => {
+          const isActive = page === s.p;
+          const isDone   = page > s.p;
+          const StepIcon = s.Icon;
+          return (
+            <button key={s.label} onClick={() => setPage(s.p)} title={s.label}
+              style={{
+                display: "flex", alignItems: "center", gap: 11,
+                padding: collapsed ? "11px 0" : "10px 12px",
+                justifyContent: collapsed ? "center" : "flex-start",
+                borderRadius: 8, border: "none", cursor: "pointer", width: "100%",
+                background: isActive ? "rgba(255,255,255,0.12)" : "transparent",
+                color: isActive ? "white" : isDone ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.5)",
+                fontFamily: FONT.sans, fontSize: 13, fontWeight: isActive ? 600 : 400,
+                transition: "background 0.12s", position: "relative", textAlign: "left",
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+              {isActive && <div style={{ position: "absolute", left: 0, top: 7, bottom: 7, width: 3, borderRadius: 2, background: "#7dd3a8" }} />}
+              {/* Step circle */}
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: isDone ? "#2d6a4f" : isActive ? "#1a4731" : "transparent",
+                border: isDone ? "2px solid #2d6a4f" : isActive ? "2px solid #7dd3a8" : "2px solid rgba(255,255,255,0.25)",
+              }}>
+                {isDone
+                  ? <Check size={11} color="white" strokeWidth={3}/>
+                  : <StepIcon size={11} color={isActive ? "white" : "rgba(255,255,255,0.5)"} strokeWidth={isActive ? 2.4 : 1.8}/>
+                }
+              </div>
+              {!collapsed && <span>{s.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Timestamps panel */}
+      {!collapsed && (startedAt || lastWorkedAt) && (
+        <div style={{ padding: "12px 18px", borderTop: "1px solid rgba(255,255,255,0.08)", fontFamily: FONT.sans }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>Started</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{fmtDate(startedAt)}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: completedAt ? 5 : 0 }}>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>Last worked</span>
+            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{fmtDateTime(lastWorkedAt)}</span>
+          </div>
+          {completedAt && (
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>Completed</span>
+              <span style={{ fontSize: 10, color: "#7dd3a8", fontWeight: 600 }}>{fmtDate(completedAt)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Exit + collapse */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: collapsed ? "10px 0" : "10px 14px", display: "flex", flexDirection: collapsed ? "column" : "row", alignItems: "center", gap: 8, justifyContent: "space-between" }}>
+        <button onClick={onExitToDashboard} title="Exit to Dashboard"
+          style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", fontFamily: FONT.sans, fontSize: 12, padding: "4px 6px", borderRadius: 6 }}
+          onMouseEnter={e => e.currentTarget.style.color = "white"}
+          onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}>
+          <LayoutDashboard size={15}/>{!collapsed && "Dashboard"}
+        </button>
+        <button onClick={onToggle} title={collapsed ? "Expand" : "Collapse"}
+          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 15, padding: 4 }}>
+          {collapsed ? "»" : "«"}
+        </button>
+      </div>
+
+      {/* User */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: collapsed ? "12px 0" : "12px 14px", display: "flex", alignItems: "center", gap: 10, justifyContent: collapsed ? "center" : "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#1a4731", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{initial}</div>
+          {!collapsed && (
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: FONT.sans, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 120 }}>{profile?.full_name || "User"}</div>
+              <div style={{ fontFamily: FONT.sans, fontSize: 10, color: "rgba(255,255,255,0.45)", textTransform: "capitalize" }}>{role}</div>
+            </div>
+          )}
+        </div>
+        {!collapsed && (
+          <button onClick={onLogout} title="Sign out"
+            style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", padding: 4 }}
+            onMouseEnter={e => e.currentTarget.style.color = "white"}
+            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>
+            <LogOut size={16}/>
+          </button>
+        )}
+      </div>
+    </aside>
+  );
+}
