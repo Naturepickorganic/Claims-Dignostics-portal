@@ -3,7 +3,7 @@ import {
   ChevronRight, TrendingUp, TrendingDown, Settings, LogOut,
   HelpCircle, X, Send, Check,
   Home, Building2, GitBranch, BarChart2, ClipboardCheck,
-  List, ScanSearch, Award,
+  List, ClipboardList, Award,
 } from "lucide-react";
 import { C, FONT, LENS_COLORS } from "./constants.js";
 
@@ -185,7 +185,7 @@ export function Nav({ page, setPage, role, profile, onAdmin, onLogout, onDashboa
         { label: "Metrics",            short: "Metrics", p: 4, Icon: BarChart2     },
         { label: "Metrics Results",    short: "Metrics", p: 5, Icon: ClipboardCheck},
         { label: "Process",            short: "Process", p: 6, Icon: List          },
-        { label: "Process Assessment", short: "Assess.", p: 7, Icon: ScanSearch    },
+        { label: "Process Assessment", short: "Assess.", p: 7, Icon: ClipboardList  },
         { label: "Process Results",    short: "Results", p: 8, Icon: Award         },
       ];
 
