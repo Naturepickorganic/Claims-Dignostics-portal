@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { ArrowLeft, Home } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, card } from "../constants.js";
-import { Nav, Tag } from "../components.jsx";
+import { Tag } from "../components.jsx";
 import { QUESTIONS_DATA } from "../questionsData.js";
 
 // ── Domain config ───────────────────────────────────────────────────────────
@@ -133,10 +133,6 @@ function RadarChart({ domainScores }) {
 export default function Page8({
   onBack,
   onDashboard,
-  role,
-  profile,
-  onAdmin,
-  onLogout,
   maturityScores = {},
   carrierInfo = {},
 }) {
@@ -241,9 +237,7 @@ export default function Page8({
   // ── Empty state ──────────────────────────────────────────────────────
   if (scored === 0) {
     return (
-      <div style={{ background: C.bg, minHeight: "100vh" }}>
-        <Nav page={7} setPage={() => {}} role={role} profile={profile}
-          onAdmin={onAdmin} onLogout={onLogout} onDashboard={onDashboard}/>
+      <div style={{ background: C.bg, minHeight: "calc(100vh - 64px)" }}>
         <div style={{ maxWidth: 680, margin: "80px auto", textAlign: "center", padding: "0 24px" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
           <div style={{ fontFamily: FONT.serif, fontSize: 22, fontWeight: 700, color: C.text, marginBottom: 8 }}>
@@ -261,12 +255,7 @@ export default function Page8({
   }
 
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", paddingBottom: 40 }}>
-
-      {/* Nav */}
-      <Nav page={7} setPage={() => {}} role={role} profile={profile}
-        onAdmin={onAdmin} onLogout={onLogout} onDashboard={onDashboard}/>
-
+    <div style={{ background: C.bg, minHeight: "calc(100vh - 64px)", paddingBottom: 40 }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "24px 24px" }}>
 
         {/* ── HEADER BANNER ── */}
