@@ -38,6 +38,7 @@ export function AppProvider({ children }) {
 
   const [assessmentId, setAssessmentId]     = useState(null);
   const [saveStatus, setSaveStatus]         = useState("idle");
+  const [lastSavedAt, setLastSavedAt]       = useState(null);
 
   // Load benchmark overrides from Supabase on mount
   useEffect(() => {
@@ -95,6 +96,7 @@ export function AppProvider({ children }) {
     // Local / offline mode — done
     if (!SUPABASE_ENABLED || !auth.session || auth.session.user.id === "local") {
       setSaveStatus("saved");
+      setLastSavedAt(new Date().toISOString());
       setTimeout(() => setSaveStatus("idle"), 2500);
       return true;
     }
@@ -133,6 +135,7 @@ export function AppProvider({ children }) {
       if (error) throw error;
 
       setSaveStatus("saved");
+      setLastSavedAt(new Date().toISOString());
       setTimeout(() => setSaveStatus("idle"), 2500);
       return true;
     } catch (e) {
@@ -226,6 +229,7 @@ export function AppProvider({ children }) {
       clearProgress,
       completeAssessment,
       saveStatus,
+      lastSavedAt,
       assessmentId,
     }}>
       {children}
