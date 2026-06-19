@@ -461,3 +461,30 @@ export async function deleteAssessment(assessmentId) {
 
   return { error };
 }
+
+// ── Reassign an assessment to a different consultant ──────────────────────────
+// Admin or the current owner can hand off an in-progress assessment.
+// Updates the owning user_id; all child rows stay linked via assessment_id.
+export async function reassignAssessment(assessmentId, newUserId) {
+  if (!SUPABASE_ENABLED) return { error: null };
+  if (!assessmentId || !newUserId) return { error: { message: "Missing assessment or target user" } };
+
+  const { error } = await supabase
+    .from("assessments")
+    .update({ user_id: newUserId })
+    .eq("id", assessmentId);
+
+  // Also move any saved progress row to the new owner so they can Resume
+  if (!error) {
+    try {
+      await supabase
+        .from("assessment_progress")
+        .update({ user_id: newUserId })
+        .eq("assessment_id", assessmentId);
+    } catch (e) {
+      // progress row may not exist — non-fatal
+    }
+  }
+
+  return { error };
+}
