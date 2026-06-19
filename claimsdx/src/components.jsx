@@ -4,6 +4,7 @@ import {
   HelpCircle, X, Send, Check,
   Home, Building2, GitBranch, BarChart2, ClipboardCheck,
   List, ClipboardList, Award,
+  LayoutDashboard, FilePlus, ShieldCheck, LifeBuoy,
 } from "lucide-react";
 import { C, FONT, LENS_COLORS } from "./constants.js";
 
@@ -407,6 +408,114 @@ export function StatCard({ label, value, sub, accent, topBorder }) {
       <div style={{ fontFamily: FONT.sans, fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{label}</div>
       <div style={{ fontFamily: FONT.mono, fontSize: 28, fontWeight: 700, color: accent || C.text, lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontFamily: FONT.sans, fontSize: 12, color: C.textSoft, marginTop: 6 }}>{sub}</div>}
+    </div>
+  );
+}
+
+// ─── Sidebar (app destinations — persistent left nav) ─────────────────────────
+export function Sidebar({ active, role, profile, onNavigate, onLogout, collapsed, onToggle }) {
+  const items = [
+    { id: "dashboard",  label: "Dashboard",      Icon: LayoutDashboard, roles: ["admin","consultant","sales"] },
+    { id: "new",        label: "New Assessment", Icon: FilePlus,       roles: ["admin","consultant"] },
+    { id: "admin",      label: "Admin Panel",    Icon: ShieldCheck,     roles: ["admin"] },
+    { id: "help",       label: "Help & Support", Icon: LifeBuoy,        roles: ["admin","consultant","sales"] },
+  ];
+  const visible = items.filter(it => it.roles.includes(role));
+
+  const W = collapsed ? 64 : 224;
+  const initial = (profile?.full_name || profile?.email || "U").charAt(0).toUpperCase();
+
+  return (
+    <aside style={{
+      width: W, minWidth: W, height: "100vh", position: "sticky", top: 0,
+      background: "#13301f", color: "white", display: "flex", flexDirection: "column",
+      transition: "width 0.18s ease", flexShrink: 0, zIndex: 40,
+    }}>
+      {/* Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "18px 0" : "18px 20px", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.serif, fontWeight: 800, fontSize: 14, color: "white", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>VM</div>
+        {!collapsed && (
+          <div>
+            <div style={{ fontFamily: FONT.serif, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>ClaimsDx</div>
+            <div style={{ fontFamily: FONT.sans, fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", marginTop: 2 }}>VALUEMOMENTUM</div>
+          </div>
+        )}
+      </div>
+
+      {/* Nav items */}
+      <nav style={{ flex: 1, padding: "12px 10px", display: "flex", flexDirection: "column", gap: 3 }}>
+        {visible.map(it => {
+          const isActive = active === it.id;
+          return (
+            <button key={it.id} onClick={() => onNavigate(it.id)} title={it.label}
+              style={{
+                display: "flex", alignItems: "center", gap: 11,
+                padding: collapsed ? "11px 0" : "11px 13px",
+                justifyContent: collapsed ? "center" : "flex-start",
+                borderRadius: 8, border: "none", cursor: "pointer", width: "100%",
+                background: isActive ? "rgba(255,255,255,0.12)" : "transparent",
+                color: isActive ? "white" : "rgba(255,255,255,0.65)",
+                fontFamily: FONT.sans, fontSize: 13, fontWeight: isActive ? 600 : 400,
+                transition: "background 0.12s, color 0.12s", position: "relative",
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
+              {isActive && <div style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: 2, background: "#7dd3a8" }} />}
+              <it.Icon size={17} strokeWidth={isActive ? 2.4 : 1.9} style={{ flexShrink: 0 }} />
+              {!collapsed && <span>{it.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Collapse toggle */}
+      <button onClick={onToggle} title={collapsed ? "Expand" : "Collapse"}
+        style={{ margin: "0 10px 8px", padding: "8px", borderRadius: 8, border: "none", background: "transparent", color: "rgba(255,255,255,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+        {collapsed ? "»" : "«"}
+      </button>
+
+      {/* User + logout */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: collapsed ? "12px 0" : "12px 14px", display: "flex", alignItems: "center", gap: 10, justifyContent: collapsed ? "center" : "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#1a4731", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{initial}</div>
+          {!collapsed && (
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: FONT.sans, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>{profile?.full_name || "User"}</div>
+              <div style={{ fontFamily: FONT.sans, fontSize: 10, color: "rgba(255,255,255,0.45)", textTransform: "capitalize" }}>{role}</div>
+            </div>
+          )}
+        </div>
+        {!collapsed && (
+          <button onClick={onLogout} title="Sign out"
+            style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", padding: 4 }}
+            onMouseEnter={e => e.currentTarget.style.color = "white"}
+            onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>
+            <LogOut size={16} />
+          </button>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ─── AppShell — sidebar + content wrapper ─────────────────────────────────────
+export function AppShell({ active, role, profile, onNavigate, onLogout, sidebarCollapsed, onToggleSidebar, children }) {
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: C.bg }}>
+      <Sidebar
+        active={active}
+        role={role}
+        profile={profile}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+        collapsed={sidebarCollapsed}
+        onToggle={onToggleSidebar}
+      />
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+        {children}
+      </div>
     </div>
   );
 }
