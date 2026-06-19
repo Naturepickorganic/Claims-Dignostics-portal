@@ -1055,15 +1055,18 @@ export default function AdminPage({ onBack, role, profile, onLogout }) {
     setLoading(true);
     try {
       const { assessments: real, error } = await listAllAssessments();
-      if (!error && real && real.length > 0) {
-        setAssessments(real);
-        setUsingReal(true);
-      } else if (!error && real && real.length === 0) {
-        // Supabase connected but empty — keep mock but mark it
+      if (error) {
+        // Query failed — keep mock as fallback and flag it
+        console.error("Admin assessments query failed:", error);
         setUsingReal(false);
+      } else {
+        // Query succeeded — use real data even if empty (do NOT show mock)
+        setAssessments(real || []);
+        setUsingReal(true);
       }
     } catch (e) {
       console.error("Failed to load assessments:", e);
+      setUsingReal(false);
     }
     setLoading(false);
     setLastFetch(new Date());
