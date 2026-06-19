@@ -127,7 +127,8 @@ export async function listAllAssessments() {
       status,
       started_at,
       completed_at,
-      assessment_results ( overall_score, maturity_level, lens_scores, lens_gaps, value_opportunities )
+      assessment_results ( overall_score, maturity_level, lens_scores, lens_gaps, value_opportunities ),
+      assessment_progress ( saved_at, current_page )
     `)
     .order("started_at", { ascending: false });
 
@@ -166,6 +167,8 @@ export async function listAllAssessments() {
     status:           a.status,
     started_at:       a.started_at,
     completed_at:     a.completed_at,
+    last_worked_at:   a.assessment_progress?.[0]?.saved_at ?? null,
+    last_page:        a.assessment_progress?.[0]?.current_page ?? null,
     overall_score:    a.assessment_results?.[0]?.overall_score ?? null,
     maturity_level:   a.assessment_results?.[0]?.maturity_level ?? null,
     lens_scores:      a.assessment_results?.[0]?.lens_scores ?? null,
