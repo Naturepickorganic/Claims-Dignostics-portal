@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Nav } from "./components.jsx";
+import { Nav, AppShell } from "./components.jsx";
 import { useApp, ROLE_ACCESS } from "./AppContext.jsx";
 import { Save, Loader } from "lucide-react";
 import { C, FONT } from "./constants.js";
@@ -51,6 +51,15 @@ export default function App() {
   const [viewingAssessment, setViewingAssessment] = useState(null);  // for read-only results
   const [carrierProfileId, setCarrierProfileId]   = useState(null);
   const [carrierProfileName, setCarrierProfileName] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Sidebar navigation handler — maps sidebar item ids to views
+  const handleSidebarNav = (id) => {
+    if (id === "dashboard") { setView("dashboard"); }
+    else if (id === "new")  { startNewAssessment(); }
+    else if (id === "admin"){ setView("admin"); }
+    else if (id === "help") { setView("dashboard"); /* help opens support modal from within */ }
+  };
 
   // Check for saved in-progress after login
   useEffect(() => {
@@ -150,12 +159,24 @@ export default function App() {
 
   // ── Admin panel ───────────────────────────────────────────────
   if (view === "admin") return (
-    <AdminPage
-      onBack={() => setView("dashboard")}
+    <AppShell
+      active="admin"
       role={role}
       profile={profile}
+      onNavigate={handleSidebarNav}
       onLogout={handleLogout}
-    />
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={()=>setSidebarCollapsed(c=>!c)}
+    >
+      <AdminPage
+        onBack={() => setView("dashboard")}
+        role={role}
+        profile={profile}
+        onLogout={handleLogout}
+        onResumeAssessment={resumeAssessment}
+        embedded
+      />
+    </AppShell>
   );
 
   // ── Carrier profile ───────────────────────────────────────────
@@ -178,10 +199,15 @@ export default function App() {
 
   // ── Dashboard ─────────────────────────────────────────────────
   if (view === "dashboard") return (
-    <>
-      <Nav page={0} setPage={()=>{}} role={role} profile={profile}
-        onAdmin={role==="admin" ? ()=>setView("admin") : null}
-        onLogout={handleLogout} />
+    <AppShell
+      active="dashboard"
+      role={role}
+      profile={profile}
+      onNavigate={handleSidebarNav}
+      onLogout={handleLogout}
+      sidebarCollapsed={sidebarCollapsed}
+      onToggleSidebar={()=>setSidebarCollapsed(c=>!c)}
+    >
       {showResume && <ResumePrompt onResume={(saved)=>{ loadProgress().then(s => s && resumeAssessment(s)); }} onDismiss={() => { clearProgress(); setShowResume(false); }} />}
       <DashboardPage
         profile={profile}
@@ -190,7 +216,7 @@ export default function App() {
         onViewResults={viewResults}
         onCarrierProfile={openCarrierProfile}
       />
-    </>
+    </AppShell>
   );
 
   // ── Read-only results view ────────────────────────────────────
