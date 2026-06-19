@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { ChevronRight, TrendingUp, TrendingDown, Settings, LogOut, HelpCircle, X, Send } from "lucide-react";
+import {
+  ChevronRight, TrendingUp, TrendingDown, Settings, LogOut,
+  HelpCircle, X, Send, Check,
+  Home, Building2, GitBranch, BarChart2, ClipboardCheck,
+  List, ScanSearch, Award,
+} from "lucide-react";
 import { C, FONT, LENS_COLORS } from "./constants.js";
 
 // ─── VM Logo mark ─────────────────────────────────────────────────────────────
@@ -168,15 +173,20 @@ function SupportButton() {
 // ─── Nav ───────────────────────────────────────────────────────────────────────
 export function Nav({ page, setPage, role, profile, onAdmin, onLogout, onDashboard }) {
   const visibleSteps = role === "sales"
-    ? [{ label: "Welcome", p: 1 }, { label: "Carrier Info", p: 2 }, { label: "Results", p: 5 }]
+    ? [
+        { label: "Welcome",        short: "Welcome",  p: 1, Icon: Home          },
+        { label: "Carrier",        short: "Carrier",  p: 2, Icon: Building2     },
+        { label: "Metrics Results",short: "M.Results",p: 5, Icon: ClipboardCheck},
+      ]
     : [
-        { label: "Welcome",    p: 1 },
-        { label: "Carrier",    p: 2 },
-        { label: "Path",       p: 3 },
-        { label: "Metrics",    p: 4 },
-        { label: "Results",    p: 5 },
-        { label: "Process",    p: 6 },
-        { label: "Assessment", p: 7 },
+        { label: "Welcome",            short: "Welcome", p: 1, Icon: Home          },
+        { label: "Carrier",            short: "Carrier", p: 2, Icon: Building2     },
+        { label: "Path",               short: "Path",    p: 3, Icon: GitBranch     },
+        { label: "Metrics",            short: "Metrics", p: 4, Icon: BarChart2     },
+        { label: "Metrics Results",    short: "Metrics", p: 5, Icon: ClipboardCheck},
+        { label: "Process",            short: "Process", p: 6, Icon: List          },
+        { label: "Process Assessment", short: "Assess.", p: 7, Icon: ScanSearch    },
+        { label: "Process Results",    short: "Results", p: 8, Icon: Award         },
       ];
 
   const roleColor = ROLE_COLORS[role] || "#1a4731";
@@ -199,39 +209,66 @@ export function Nav({ page, setPage, role, profile, onAdmin, onLogout, onDashboa
           <VMLogo size="md" />
         </div>
 
-        {/* Step nav — centered, minimal */}
+        {/* Step nav — numbered circles with icons */}
         <nav style={{ display: "flex", alignItems: "center", gap: 0, flex: 1, justifyContent: "center" }}>
           {visibleSteps.map((s, i) => {
-            const isActive = page === s.p;
-            const isDone   = page > s.p;
+            const isActive  = page === s.p;
+            const isDone    = page > s.p;
+            const isFuture  = page < s.p;
+            const StepIcon  = s.Icon;
+
             return (
               <div key={s.label} style={{ display: "flex", alignItems: "center" }}>
                 <button
                   onClick={() => setPage(s.p)}
+                  title={s.label}
                   style={{
-                    fontFamily: FONT.sans,
-                    fontSize: 12,
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "#1a4731" : isDone ? "#7a9688" : "#4a6357",
-                    background: "transparent",
-                    border: "none",
-                    padding: "4px 10px",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                    position: "relative",
-                    letterSpacing: "0.01em",
+                    display: "flex", alignItems: "center", gap: 5,
+                    background: "transparent", border: "none",
+                    padding: "4px 6px", borderRadius: 6,
+                    cursor: "pointer", position: "relative",
+                    opacity: isFuture ? 0.45 : 1,
+                    transition: "opacity 0.15s",
                   }}
                 >
-                  {s.label}
+                  {/* Circle indicator */}
+                  <div style={{
+                    width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: isDone ? "#1a4731" : isActive ? "#1a4731" : "transparent",
+                    border: isDone ? "2px solid #1a4731" : isActive ? "2px solid #1a4731" : "2px solid #c3ddd0",
+                    transition: "all 0.2s",
+                  }}>
+                    {isDone
+                      ? <Check size={11} color="white" strokeWidth={3}/>
+                      : <StepIcon size={11}
+                          color={isActive ? "white" : isFuture ? "#94a3b8" : "#4a6357"}
+                          strokeWidth={isActive ? 2.5 : 1.8}/>
+                    }
+                  </div>
+                  {/* Label — always show, truncated */}
+                  <span style={{
+                    fontFamily: FONT.sans,
+                    fontSize: 11,
+                    fontWeight: isActive ? 700 : isDone ? 500 : 400,
+                    color: isActive ? "#1a4731" : isDone ? "#4a6357" : "#94a3b8",
+                    whiteSpace: "nowrap",
+                    maxWidth: isActive ? 90 : 72,
+                    overflow: "hidden", textOverflow: "ellipsis",
+                    letterSpacing: "0.01em",
+                  }}>
+                    {isActive ? s.label : s.short}
+                  </span>
+                  {/* Active underline */}
                   {isActive && (
                     <div style={{
-                      position: "absolute", bottom: -22, left: 0, right: 0,
+                      position: "absolute", bottom: -18, left: 0, right: 0,
                       height: 2, background: "#1a4731", borderRadius: 1,
-                    }} />
+                    }}/>
                   )}
                 </button>
                 {i < visibleSteps.length - 1 && (
-                  <ChevronRight size={11} color="#c3ddd0" strokeWidth={2} />
+                  <ChevronRight size={10} color="#d8ebe2" strokeWidth={2.5} style={{ flexShrink: 0 }}/>
                 )}
               </div>
             );
