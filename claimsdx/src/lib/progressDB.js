@@ -108,6 +108,10 @@ export async function listAssessments(userId) {
 export async function listAllAssessments() {
   // Admin only — queries assessments table directly (not view) to include all statuses
   if (!SUPABASE_ENABLED) return { assessments: [], error: null };
+
+  // Step 1: fetch assessments WITHOUT the profiles join.
+  // The profiles join can fail under RLS and cause the whole query to error,
+  // which then makes the Admin panel fall back to mock data.
   const { data, error } = await supabase
     .from("assessments")
     .select(`
@@ -123,12 +127,30 @@ export async function listAllAssessments() {
       status,
       started_at,
       completed_at,
-      assessment_results ( overall_score, maturity_level, lens_scores, lens_gaps, value_opportunities ),
-      profiles:user_id ( full_name, email )
+      assessment_results ( overall_score, maturity_level, lens_scores, lens_gaps, value_opportunities )
     `)
     .order("started_at", { ascending: false });
 
-  if (error) return { assessments: [], error };
+  if (error) {
+    console.error("listAllAssessments error:", error);
+    return { assessments: [], error };
+  }
+
+  // Step 2: best-effort fetch of consultant names (separate query, non-blocking)
+  let profileMap = {};
+  try {
+    const userIds = [...new Set((data || []).map(a => a.user_id).filter(Boolean))];
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+      (profs || []).forEach(p => { profileMap[p.id] = p; });
+    }
+  } catch (e) {
+    // If profiles can't be read, just show assessments without consultant names
+    console.warn("Could not load consultant names:", e);
+  }
 
   // Flatten nested joins into flat objects (same shape as assessment_history view)
   const flat = (data || []).map(a => ({
@@ -149,8 +171,8 @@ export async function listAllAssessments() {
     lens_scores:      a.assessment_results?.[0]?.lens_scores ?? null,
     lens_gaps:        a.assessment_results?.[0]?.lens_gaps ?? null,
     value_opportunities: a.assessment_results?.[0]?.value_opportunities ?? null,
-    consultant_name:  a.profiles?.full_name ?? null,
-    consultant_email: a.profiles?.email ?? null,
+    consultant_name:  profileMap[a.user_id]?.full_name ?? null,
+    consultant_email: profileMap[a.user_id]?.email ?? null,
   }));
 
   return { assessments: flat, error: null };
