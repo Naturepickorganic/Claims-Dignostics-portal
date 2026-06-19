@@ -400,131 +400,6 @@ function BenchmarkTable({ carrierLobs, carrierTier, metricsData }) {
   );
 }
 
-// ─── Process results tab ──────────────────────────────────────
-function TabProcessResults({ maturityScores }) {
-  const SCALE_LABELS = [
-    "Minimal alignment — significant improvements needed",
-    "Partial alignment — multiple areas require enhancement",
-    "Some alignment — opportunities exist for optimization",
-    "Strong alignment — minor gaps remain",
-    "Fully aligned — no significant improvements required",
-  ];
-  const SCALE_COLORS = ["#dc2626","#ea580c","#ca8a04","#16a34a","#166534"];
-  const SCALE_BG     = ["#fef2f2","#fff7ed","#fefce8","#f0fdf4","#dcfce7"];
-
-  // Group by l3 key stem (remove _tech/_proc suffix)
-  const l3Keys = [...new Set(
-    Object.keys(maturityScores)
-      .filter(k=>k.endsWith("_tech")||k.endsWith("_proc"))
-      .map(k=>k.replace(/_tech$|_proc$/,""))
-  )];
-
-  const scored = l3Keys.filter(k=>maturityScores[k+"_tech"] && maturityScores[k+"_proc"]).length;
-  const totalQuestions = l3Keys.length;
-
-  if (totalQuestions === 0) {
-    return (
-      <div style={{...card,padding:"40px",textAlign:"center"}}>
-        <div style={{fontSize:32,marginBottom:12}}>📋</div>
-        <div style={{fontFamily:FONT.serif,fontSize:16,fontWeight:700,color:C.text,marginBottom:8}}>No process scores found</div>
-        <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>Complete the Process Maturity Assessment (Step 5) to see results here.</div>
-      </div>
-    );
-  }
-
-  // Compute per-dimension averages (tech vs process)
-  const techScores = l3Keys.map(k=>maturityScores[k+"_tech"]).filter(Boolean);
-  const procScores = l3Keys.map(k=>maturityScores[k+"_proc"]).filter(Boolean);
-  const avgTech = techScores.length ? (techScores.reduce((a,b)=>a+b,0)/techScores.length) : 0;
-  const avgProc = procScores.length ? (procScores.reduce((a,b)=>a+b,0)/procScores.length) : 0;
-  const avgCombined = (avgTech + avgProc) / 2;
-
-  const maturityLabel = avgCombined >= 4.5 ? "Leading" : avgCombined >= 3.5 ? "Advanced" : avgCombined >= 2.5 ? "Developing" : "Foundational";
-  const maturityColor = avgCombined >= 4.5 ? "#166534" : avgCombined >= 3.5 ? "#1a4731" : avgCombined >= 2.5 ? "#92400e" : "#991b1b";
-
-  return (
-    <div>
-      {/* Summary cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:20}}>
-        {[
-          {label:"Process Maturity (avg)",value:avgProc.toFixed(1)+"/5",color:"#15803d",bg:"#f0fdf4"},
-          {label:"Technology Maturity (avg)",value:avgTech.toFixed(1)+"/5",color:"#0369a1",bg:"#f0f9ff"},
-          {label:"Combined Maturity Level",value:maturityLabel,color:maturityColor,bg:"#f7faf8"},
-        ].map(s=>(
-          <div key={s.label} style={{...card,padding:"20px",borderTop:"3px solid "+s.color}}>
-            <div style={{fontFamily:FONT.mono,fontSize:26,fontWeight:800,color:s.color,lineHeight:1,marginBottom:4}}>{s.value}</div>
-            <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em"}}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Score distribution */}
-      <div style={{...card,padding:"20px 24px",marginBottom:16}}>
-        <div style={{fontFamily:FONT.serif,fontSize:15,fontWeight:700,color:C.text,marginBottom:14}}>Score Distribution — {scored} of {totalQuestions} sub-processes scored</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-          {[
-            {label:"Process Dimension",scores:procScores,color:"#15803d"},
-            {label:"Technology Dimension",scores:techScores,color:"#0369a1"},
-          ].map(({label,scores,color})=>{
-            const dist=[0,0,0,0,0];
-            scores.forEach(s=>{ if(s>=1&&s<=5) dist[s-1]++; });
-            return (
-              <div key={label}>
-                <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color,marginBottom:10}}>{label}</div>
-                {[1,2,3,4,5].map(n=>{
-                  const cnt=dist[n-1];
-                  const pct=scores.length?Math.round((cnt/scores.length)*100):0;
-                  return (
-                    <div key={n} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                      <span style={{fontSize:11,fontWeight:700,color:SCALE_COLORS[n-1],background:SCALE_BG[n-1],borderRadius:3,padding:"1px 7px",minWidth:18,textAlign:"center"}}>{n}</span>
-                      <div style={{flex:1,height:8,borderRadius:4,background:"#edf5f0",overflow:"hidden"}}>
-                        <div style={{height:"100%",width:pct+"%",background:SCALE_COLORS[n-1],borderRadius:4}}/>
-                      </div>
-                      <span style={{fontFamily:FONT.mono,fontSize:10,color:SCALE_COLORS[n-1],minWidth:28}}>{cnt} ({pct}%)</span>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Question detail table */}
-      <div style={{...card,overflow:"hidden"}}>
-        <div style={{padding:"12px 18px",background:"#f7faf8",borderBottom:"2px solid #1a4731",fontFamily:FONT.serif,fontSize:14,fontWeight:700,color:C.text}}>
-          Sub-process Detail
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 80px",gap:0,padding:"8px 18px",background:"#f7faf8",borderBottom:"1px solid #d8ebe2"}}>
-          {["Sub-process","Process","Technology","Combined"].map((h,i)=>(
-            <div key={h} style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,color:C.textMuted,textTransform:"uppercase",letterSpacing:"0.07em",textAlign:i>0?"center":"left"}}>{h}</div>
-          ))}
-        </div>
-        {l3Keys.slice(0,30).map((k,i)=>{
-          const t=maturityScores[k+"_tech"];
-          const p=maturityScores[k+"_proc"];
-          const avg=t&&p?((t+p)/2).toFixed(1):"-";
-          const avgN=t&&p?(t+p)/2:null;
-          return (
-            <div key={k} style={{display:"grid",gridTemplateColumns:"1fr 80px 80px 80px",gap:0,padding:"10px 18px",borderBottom:"1px solid #edf5f0",background:i%2===0?"white":"#fafcfa",alignItems:"center"}}>
-              <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMid,lineHeight:1.4}}>{k.replace(/_/g," ")}</div>
-              {[p,t].map((score,si)=>(
-                <div key={si} style={{textAlign:"center"}}>
-                  {score ? <span style={{fontFamily:FONT.mono,fontSize:13,fontWeight:700,color:SCALE_COLORS[score-1],background:SCALE_BG[score-1],borderRadius:4,padding:"2px 8px"}}>{score}</span>
-                   : <span style={{color:"#d8ebe2"}}>—</span>}
-                </div>
-              ))}
-              <div style={{textAlign:"center"}}>
-                {avgN!==null?<span style={{fontFamily:FONT.mono,fontSize:13,fontWeight:800,color:SCALE_COLORS[Math.round(avgN)-1]}}>{avg}</span>:<span style={{color:"#d8ebe2"}}>—</span>}
-              </div>
-            </div>
-          );
-        })}
-        {l3Keys.length>30&&<div style={{padding:"10px 18px",fontFamily:FONT.sans,fontSize:11,color:C.textMuted,textAlign:"center"}}>Showing 30 of {l3Keys.length} sub-processes</div>}
-      </div>
-    </div>
-  );
-}
 
 // ─── Tab: Comparative ─────────────────────────────────────────
 function TabComparative({ displayScores, valueOpps }) {
@@ -924,7 +799,6 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
     { id:"comparative", label:"Comparative View" },
     { id:"overview",    label:"Score Overview"   },
     { id:"benchmarks",  label:"Benchmark Table"  },
-    ...(hasMaturity ? [{ id:"process", label:"Process Results" }] : []),
     { id:"findings",    label:"Key Findings"     },
     { id:"priorities",  label:"Roadmap"          },
   ];
@@ -932,48 +806,57 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
 
   // PDF export — inject full print stylesheet for consistent rendering
   const handleExportPDF = () => {
-    const existing = document.getElementById("claimsdx-print-style");
-    if (existing) existing.remove();
-    const style = document.createElement("style");
-    style.id = "claimsdx-print-style";
-    style.innerHTML = `
-      @media print {
-        @page { size: A4; margin: 15mm 12mm; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        body { background: white !important; font-size: 11pt; }
-        .no-print { display: none !important; }
-        /* Nav, tabs, footer buttons */
-        nav, header { display: none !important; }
-        /* Show all tab content at once in print */
-        [data-tab-panel] { display: block !important; page-break-inside: avoid; }
-        /* Score ring and cards */
-        div[style*="box-shadow"] { box-shadow: none !important; }
-        /* Page breaks */
-        .print-break { page-break-before: always; }
-        /* Force white backgrounds on colored elements */
-        div[style*="background:#f7faf8"] { background: #f9f9f9 !important; }
-        /* Spectrum bars keep color */
-        div[style*="background:#fecaca"], div[style*="background:#fde68a"], div[style*="background:#86efac"] {
-          -webkit-print-color-adjust: exact !important;
-        }
-        /* Ensure content fits page width */
-        .page-wrap { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-        /* Table formatting */
-        table { width: 100% !important; font-size: 9pt; }
-        /* Hide interactive elements */
-        button { display: none !important; }
-        input { border: 1px solid #ccc !important; }
-      }
-    `;
-    document.head.appendChild(style);
-    // Small delay to let styles apply
-    setTimeout(() => {
+    // Open the printable report in a NEW TAB so the portal stays open.
+    // We clone the current results content into a fresh document and trigger
+    // print there — the portal tab is never navigated away from.
+    const resultsEl = document.getElementById("claimsdx-results-content");
+    const contentHTML = resultsEl ? resultsEl.innerHTML : document.body.innerHTML;
+
+    const win = window.open("", "_blank");
+    if (!win) {
+      // Popup blocked — fall back to in-tab print but warn
+      alert("Please allow pop-ups for this site to open the PDF in a new tab. Falling back to print.");
       window.print();
-      setTimeout(() => {
-        const el = document.getElementById("claimsdx-print-style");
-        if (el) el.remove();
-      }, 2000);
-    }, 200);
+      return;
+    }
+
+    const carrierLabel = carrierInfo?.name ? carrierInfo.name : "Assessment";
+
+    win.document.open();
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>ClaimsDx — ${carrierLabel} Results</title>
+  <style>
+    @page { size: A4; margin: 15mm 12mm; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
+    body { background: white; font-family: 'Inter', Arial, sans-serif; font-size: 11pt; color: #0f1a13; margin: 0; padding: 20px; }
+    button, input, select, textarea, .no-print { display: none !important; }
+    nav, header { display: none !important; }
+    table { width: 100% !important; border-collapse: collapse; font-size: 9pt; }
+    div[style*="box-shadow"] { box-shadow: none !important; }
+    .print-break { page-break-before: always; }
+    img, svg { max-width: 100%; }
+    h1,h2,h3 { page-break-after: avoid; }
+    tr, .card { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a4731;">
+    <div style="font-family:Georgia,serif;font-size:20pt;font-weight:700;color:#1a4731;">Claims<span style="color:#0f1a13;">Dx</span> Diagnostic Report</div>
+    <div style="font-size:10pt;color:#4a6357;margin-top:4px;">${carrierLabel}${carrierInfo?.tier?` · Tier ${carrierInfo.tier}`:""} · Generated ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
+  </div>
+  ${contentHTML}
+</body>
+</html>`);
+    win.document.close();
+
+    // Give the new tab a moment to render, then trigger its print dialog
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 400);
   };
 
   return (
@@ -1038,12 +921,13 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
         ))}
       </div>
 
+      <div id="claimsdx-results-content">
       {tab==="comparative" && <TabComparative displayScores={displayScores} valueOpps={valueOpps}/>}
       {tab==="overview"    && <TabOverview displayScores={displayScores}/>}
       {tab==="benchmarks"  && <BenchmarkTable metricsData={effectiveMetrics} carrierLobs={carrierInfo?.lobs||[]} carrierTier={carrierInfo?.tier||2}/>}
-      {tab==="process"     && <TabProcessResults maturityScores={maturityScores||{}}/>}
       {tab==="findings"    && <TabFindings displayScores={displayScores}/>}
       {tab==="priorities"  && <TabRoadmap displayScores={displayScores} valueOpps={valueOpps}/>}
+      </div>
 
       <div style={{marginTop:28,display:"flex",justifyContent:"space-between"}} className="no-print">
         <button style={{...btnSecondary,borderRadius:6}} onClick={()=>setPage(1)}><RotateCcw size={13}/> Start New</button>
