@@ -7,6 +7,7 @@ import {
   createAssessment,
   saveProgressToDB,
   loadProgressFromDB,
+  loadProgressByAssessmentIdFromDB,
   markAssessmentComplete,
   saveResults,
   loadBenchmarkOverrides,
@@ -23,7 +24,7 @@ export const ROLES = {
 
 export const ROLE_ACCESS = {
   sales:      [1, 2, 3, 5],
-  consultant: [1, 2, 3, 4, 5, 6, 7],
+  consultant: [1, 2, 3, 4, 5, 6, 7, 8],
   admin:      [1, 2, 3, 4, 5, 6, 7, 8, 9],
 };
 
@@ -162,6 +163,18 @@ export function AppProvider({ children }) {
     return progress;
   }, [auth.session]);
 
+  // Load a SPECIFIC assessment's saved progress and adopt it as the active
+  // assessment, so later saves update THAT record instead of creating a new one.
+  const loadProgressById = useCallback(async (asmId) => {
+    if (!SUPABASE_ENABLED || !auth.session || auth.session.user.id === "local" || !asmId) return null;
+    const { progress } = await loadProgressByAssessmentIdFromDB(asmId);
+    if (progress) {
+      assessmentIdRef.current = progress.assessmentId;
+      setAssessmentId(progress.assessmentId);
+    }
+    return progress;
+  }, [auth.session]);
+
   const clearProgress = useCallback(() => {
     localStorage.removeItem("claimsdx_progress");
     assessmentIdRef.current = null;
@@ -226,6 +239,7 @@ export function AppProvider({ children }) {
       updateBenchmarkOverride,
       saveProgress,
       loadProgress,
+      loadProgressById,
       clearProgress,
       completeAssessment,
       saveStatus,

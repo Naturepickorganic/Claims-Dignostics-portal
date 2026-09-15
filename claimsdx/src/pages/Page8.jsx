@@ -655,14 +655,17 @@ export default function Page8({
             </div>
             <span style={STAG}>90-Day · 6-Month · 12-Month</span>
           </div>
-          <div style={{ padding: 22, display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
-            {roadmap.map(col => (
-              <div key={col.horizon}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: col.color, marginBottom: 12, paddingBottom: 8, borderBottom: `2px solid ${col.color}33` }}>
-                  {col.horizon}
+          <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 16 }}>
+            {roadmap.map((col, phaseIdx) => (
+              <div key={col.horizon} style={{ border: `1px solid ${col.color}33`, borderLeft: `4px solid ${col.color}`, borderRadius: 8, background: `${col.color}08`, padding: "14px 18px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, paddingBottom: 8, borderBottom: `2px solid ${col.color}22` }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".08em", color: "white", background: col.color, borderRadius: 4, padding: "3px 8px" }}>PHASE {phaseIdx + 1}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: col.color }}>{col.horizon}</span>
+                  <span style={{ marginLeft: "auto", fontFamily: FONT.sans, fontSize: 10, color: C.textMuted }}>{col.items.length} initiative{col.items.length === 1 ? "" : "s"}</span>
                 </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
                 {col.items.length ? col.items.map((g, i) => (
-                  <div key={g.l2} style={{ display: "flex", gap: 10, marginBottom: 12, alignItems: "flex-start" }}>
+                  <div key={g.l2} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                     <div style={{ width: 20, height: 20, borderRadius: "50%", background: `${col.color}22`, border: `1.5px solid ${col.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: col.color, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
                     <div>
                       <div style={{ fontFamily: FONT.sans, fontSize: 12, fontWeight: 700, color: NAV, lineHeight: 1.4 }}>
@@ -678,6 +681,7 @@ export default function Page8({
                 )) : (
                   <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textMuted, fontStyle: "italic" }}>No items in this horizon</div>
                 )}
+                </div>
               </div>
             ))}
           </div>

@@ -90,6 +90,15 @@ function calcValueOpportunities(lensScores, tier=2) {
   return opportunities;
 }
 
+// ─── ±5% presentation band for estimated values ───────────────
+function valueRange(valueStr) {
+  const m = /\$([\d.]+)M/.exec(valueStr || "");
+  if (!m) return valueStr;
+  const v = parseFloat(m[1]);
+  const f = x => (x >= 10 ? Math.round(x).toString() : (Math.round(x * 10) / 10).toString());
+  return `$${f(v * 0.95)}M – $${f(v * 1.05)}M`;
+}
+
 // ─── Compute scores from metrics data (metrics path) ──────────
 // ─── Tier-aware scoring — delegates to benchmarkHelpers ──────
 function computeScoresFromMetrics(metricsData, carrierInfo, benchmarkOverrides) {
@@ -641,14 +650,15 @@ function TabRoadmap({ displayScores, valueOpps }) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
           {valueOpps.map(item=>(
             <div key={item.label} style={{textAlign:"center",padding:"16px 12px",borderRadius:6,border:"1px solid "+item.color+"33",background:item.color+"08"}}>
-              <div style={{fontFamily:FONT.mono,fontSize:22,fontWeight:800,color:item.color}}>{item.value}</div>
+              <div style={{fontFamily:FONT.mono,fontSize:19,fontWeight:800,color:item.color}}>{valueRange(item.value)}</div>
+              <div style={{fontFamily:FONT.sans,fontSize:9,color:C.textMuted,marginTop:2}}>midpoint {item.value} · ±5% band</div>
               <div style={{fontFamily:FONT.sans,fontSize:11,color:C.textMid,fontWeight:600,marginTop:4}}>{item.label}</div>
               <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,marginTop:4,lineHeight:1.4}}>{item.basis}</div>
             </div>
           ))}
         </div>
         <div style={{marginTop:12,padding:"8px 12px",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:4,fontFamily:FONT.sans,fontSize:11,color:"#92400e"}}>
-          ⚠ Estimates are indicative only, based on industry benchmarks and tier-adjusted DWP assumptions. Actual value depends on carrier-specific premium base and implementation quality.
+          ⚠ Estimates are indicative only, shown as a ±5% band around the modeled midpoint, based on industry benchmarks and tier-adjusted DWP assumptions. Actual value depends on carrier-specific premium base and implementation quality.
         </div>
       </div>
       {horizons.map(p=>(
@@ -904,7 +914,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
           <div style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft,lineHeight:1.65,maxWidth:460}}>
             {displayScores.filter(s=>s.score>=65).map(s=>s.label.split(" ")[0]).join(" and ")||"Overall"} {displayScores.filter(s=>s.score>=65).length>0?"anchors the portfolio.":""}{" "}
             {displayScores.filter(s=>s.score<65).length>0&&`${displayScores.filter(s=>s.score<65).map(s=>s.label.split(" ")[0]).join(" and ")} represent${displayScores.filter(s=>s.score<65).length===1?"s":""} the primary opportunity — `}
-            {valueOpps[0]&&<strong style={{color:"#1a4731"}}>{valueOpps[0].value} estimated improvement potential.</strong>}
+            {valueOpps[0]&&<strong style={{color:"#1a4731"}}>{valueRange(valueOpps[0].value)} estimated improvement potential (±5%).</strong>}
           </div>
         </div>
       </div>

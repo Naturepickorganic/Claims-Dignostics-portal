@@ -249,6 +249,81 @@ export async function loadProgressFromDB(userId) {
   };
 }
 
+// ── Load progress for a SPECIFIC assessment (admin resume, row-accurate resume) ──
+// RLS gates access: owners pass via own policy, admins via the v36 admin policy.
+export async function loadProgressByAssessmentIdFromDB(assessmentId) {
+  if (!SUPABASE_ENABLED || !assessmentId) return { progress: null, error: null };
+
+  const { data, error } = await supabase
+    .from("assessments")
+    .select(`
+      id, user_id, carrier_name, naic, tier, lobs, path, status, started_at,
+      assessment_progress (
+        current_page, assessment_path, carrier_info, metrics_data,
+        process_selections, maturity_scores, org_benchmark_vals, saved_at
+      )
+    `)
+    .eq("id", assessmentId)
+    .maybeSingle();
+
+  if (error || !data) return { progress: null, error };
+  const p = data.assessment_progress?.[0] || null;
+
+  return {
+    progress: p ? {
+      assessmentId:      data.id,
+      ownerUserId:       data.user_id,
+      page:              p.current_page,
+      assessmentPath:    p.assessment_path,
+      carrierInfo:       p.carrier_info,
+      metricsData:       p.metrics_data,
+      processSelections: p.process_selections,
+      maturityScores:    p.maturity_scores,
+      orgBenchmarkVals:  p.org_benchmark_vals,
+      savedAt:           p.saved_at,
+    } : null,
+    error: null,
+  };
+}
+
+
+// ── Carrier Economics master (keyed by NAIC, shared across assessments) ──────
+const ECO_COLS = {
+  dwp: "dwp", nwp: "nwp", dep: "dep", nep: "nep",
+  policiesInForce: "policies_in_force", policyRetention: "policy_retention",
+  annualClaims: "annual_claims", openInventory: "open_inventory",
+  incurredLoss: "incurred_loss", paidAlae: "paid_alae", paidUlae: "paid_ulae",
+  subroRecoverable: "subro_recoverable", salvageEligible: "salvage_eligible",
+  adjusterCount: "adjuster_count", loadedFteCost: "loaded_fte_cost", productiveHours: "productive_hours",
+  rentalCostDay: "rental_cost_day", aleCostDay: "ale_cost_day", costPerCall: "cost_per_call",
+};
+const toNum = v => {
+  const s = String(v ?? "").replace(/[, ]/g, "");
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+};
+
+export async function upsertCarrierEconomics(naic, carrierName, economics, userId) {
+  if (!SUPABASE_ENABLED || !naic || !economics) return { error: null };
+  const row = { naic, carrier_name: carrierName || null, updated_by: userId || null, updated_at: new Date().toISOString() };
+  Object.entries(ECO_COLS).forEach(([camel, col]) => { row[col] = toNum(economics[camel]); });
+  const { error } = await supabase.from("carrier_economics").upsert(row, { onConflict: "naic" });
+  return { error };
+}
+
+export async function getCarrierEconomics(naic) {
+  if (!SUPABASE_ENABLED || !naic) return { economics: null, error: null };
+  const { data, error } = await supabase
+    .from("carrier_economics").select("*").eq("naic", naic).maybeSingle();
+  if (error || !data) return { economics: null, error };
+  const economics = {};
+  Object.entries(ECO_COLS).forEach(([camel, col]) => {
+    economics[camel] = data[col] === null || data[col] === undefined ? "" : String(data[col]);
+  });
+  return { economics, error: null };
+}
+
 // ── Results (save on completion) ──────────────────────────────────────────────
 export async function saveResults(userId, assessmentId, carrierId, results) {
   if (!SUPABASE_ENABLED) return { error: null };

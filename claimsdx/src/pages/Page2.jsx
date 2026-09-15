@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { ArrowRight, ArrowLeft, Car, Home, Truck, Building2, Briefcase, Shield, Globe } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowRight, ArrowLeft, Car, Home, Truck, Building2, Briefcase, Shield, Globe, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, card } from "../constants.js";
 import { PageWrap, SectionHead, Tag } from "../components.jsx";
+import { getCarrierEconomics } from "../lib/progressDB.js";
 
 const LOBS = [
   { id: "pa",  label: "Personal Auto",     icon: Car,       accent: "#1e3a5f" },
@@ -23,8 +24,77 @@ const ASSESS_TYPES = [
   { id: "targeted", label: "Targeted Review",     desc: "Single lens or LOB deep-dive"         },
 ];
 
+// ─── Carrier Economics: powers dollar sizing of every recommendation ─────────
+const ECO_DEFAULTS = { productiveHours: "1700", loadedFteCost: "85000", rentalCostDay: "45", aleCostDay: "150", costPerCall: "6.50" };
+const ECO_GROUPS = [
+  { name: "Premium & Portfolio", fields: [
+    { id: "dwp",             label: "Direct Written Premium (DWP)", unit: "$M" },
+    { id: "nwp",             label: "Net Written Premium (NWP)",    unit: "$M" },
+    { id: "dep",             label: "Direct Earned Premium (DEP)",  unit: "$M", priority: true, help: "Drives loss ratio economics" },
+    { id: "nep",             label: "Net Earned Premium (NEP)",     unit: "$M" },
+    { id: "policiesInForce", label: "Policies in Force",            unit: "count" },
+    { id: "policyRetention", label: "Policy Retention Rate",        unit: "%" },
+  ]},
+  { name: "Claims Volume", fields: [
+    { id: "annualClaims",  label: "Annual Claims Volume",  unit: "count", priority: true, help: "The multiplier in every per claim formula" },
+    { id: "openInventory", label: "Open Claim Inventory",  unit: "count" },
+  ]},
+  { name: "Loss & LAE Dollars", fields: [
+    { id: "incurredLoss", label: "Incurred Losses (latest year)", unit: "$M" },
+    { id: "paidAlae",     label: "ALAE Paid",                     unit: "$M", priority: true, help: "Sizes the DCC value pool" },
+    { id: "paidUlae",     label: "ULAE Paid",                     unit: "$M", priority: true, help: "Sizes the handling capacity pool" },
+  ]},
+  { name: "Recovery Base", fields: [
+    { id: "subroRecoverable", label: "Subrogation Recoverable Base", unit: "$M", priority: true, help: "Base for recovery uplift math" },
+    { id: "salvageEligible",  label: "Salvage Eligible Base",        unit: "$M" },
+  ]},
+  { name: "Workforce", fields: [
+    { id: "adjusterCount",   label: "Adjuster Headcount",         unit: "FTE", priority: true, help: "Converts hours released to capacity" },
+    { id: "loadedFteCost",   label: "Loaded Cost per Adjuster",   unit: "$/yr",   isDefault: true },
+    { id: "productiveHours", label: "Productive Hours per FTE",   unit: "hrs/yr", isDefault: true },
+  ]},
+  { name: "Economic Bridges", fields: [
+    { id: "rentalCostDay", label: "Avg Rental Cost per Day",  unit: "$", isDefault: true },
+    { id: "aleCostDay",    label: "Avg ALE Cost per Day",     unit: "$", isDefault: true },
+    { id: "costPerCall",   label: "Cost per Status Call",     unit: "$", isDefault: true },
+  ]},
+];
+const ECO_ALL = ECO_GROUPS.flatMap(g => g.fields);
+
 export default function Page2({ onNext, onBack, onCarrierInfo, initialData }) {
-  const [form, setForm] = useState(initialData && initialData.name ? { ...{ name: "", naic: "", tier: "", lobs: [], type: "baseline" }, ...initialData } : { name: "", naic: "", tier: "", lobs: [], type: "baseline" });
+  const blank = { name: "", naic: "", tier: "", lobs: [], type: "baseline", economics: { ...ECO_DEFAULTS } };
+  const [form, setForm] = useState(initialData && initialData.name
+    ? { ...blank, ...initialData, economics: { ...ECO_DEFAULTS, ...(initialData.economics || {}) } }
+    : blank);
+  const [ecoOpen, setEcoOpen] = useState(false);
+  const setEco = (id, val) => setForm(f => ({ ...f, economics: { ...f.economics, [id]: val } }));
+  const ecoFetched = useRef({});
+  const [ecoLoadedFor, setEcoLoadedFor] = useState(null);
+  useEffect(() => {
+    const naic = form.naic;
+    if (!/^\d{5}$/.test(naic) || ecoFetched.current[naic]) return;
+    ecoFetched.current[naic] = true;
+    getCarrierEconomics(naic).then(({ economics }) => {
+      if (!economics) return;
+      const hasSaved = Object.values(economics).some(v => String(v).trim() !== "");
+      if (!hasSaved) return;
+      // Merge saved values over untouched fields only, so typed values are never overwritten
+      setForm(f => {
+        const merged = { ...f.economics };
+        Object.entries(economics).forEach(([k, v]) => {
+          const cur = String(merged[k] ?? "").trim();
+          const isDefault = cur === "" || cur === (ECO_DEFAULTS[k] ?? "__none__");
+          if (String(v).trim() !== "" && isDefault) merged[k] = v;
+        });
+        return { ...f, economics: merged };
+      });
+      setEcoLoadedFor(naic);
+    }).catch(() => {});
+  }, [form.naic]);
+
+  const ecoFilled = ECO_ALL.filter(fd => String(form.economics?.[fd.id] ?? "").trim() !== "").length;
+  const prioFilled = ECO_ALL.filter(fd => fd.priority && String(form.economics?.[fd.id] ?? "").trim() !== "").length;
+  const prioTotal  = ECO_ALL.filter(fd => fd.priority).length;
   const [errors, setErrors] = useState({});
 
   const toggle = id => setForm(f => ({
@@ -146,6 +216,57 @@ export default function Page2({ onNext, onBack, onCarrierInfo, initialData }) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Carrier Economics — optional, powers dollar sizing */}
+      <div style={{ ...card, padding: 0, marginBottom: 22, overflow: "hidden" }}>
+        <button onClick={() => setEcoOpen(o => !o)} style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 18px", background: ecoOpen ? "#f0f7f3" : "white", border: "none", cursor: "pointer",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 6, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <DollarSign size={15} color="white" />
+            </div>
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontFamily: FONT.sans, fontSize: 13.5, fontWeight: 700, color: C.text }}>Carrier Economics <span style={{ fontWeight: 400, color: C.textMuted, fontSize: 11.5 }}>(optional, unlocks dollar sizing of recommendations)</span></div>
+              <div style={{ fontFamily: FONT.sans, fontSize: 11, color: C.textMuted, marginTop: 2 }}>
+                {ecoFilled} of {ECO_ALL.length} provided · Priority fields {prioFilled} of {prioTotal}{ecoLoadedFor ? ` · saved values loaded for NAIC ${ecoLoadedFor}` : " · every blank lowers sizing confidence"}
+              </div>
+            </div>
+          </div>
+          {ecoOpen ? <ChevronUp size={16} color={C.textMuted} /> : <ChevronDown size={16} color={C.textMuted} />}
+        </button>
+        {ecoOpen && (
+          <div style={{ padding: "4px 18px 16px" }}>
+            {ECO_GROUPS.map(g => (
+              <div key={g.name} style={{ marginTop: 12 }}>
+                <div style={{ fontFamily: FONT.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "#2d6a4f", marginBottom: 8 }}>{g.name}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(215px, 1fr))", gap: 10 }}>
+                  {g.fields.map(fd => (
+                    <div key={fd.id}>
+                      <label style={{ fontFamily: FONT.sans, fontSize: 11, fontWeight: 600, color: C.textMid, display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                        {fd.label}
+                        {fd.priority && <span style={{ fontSize: 8.5, fontWeight: 800, color: "#92400e", background: "#fef3c7", borderRadius: 3, padding: "1px 5px", letterSpacing: "0.04em" }}>PRIORITY</span>}
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input value={form.economics?.[fd.id] ?? ""} onChange={e => setEco(fd.id, e.target.value)}
+                          inputMode="decimal" placeholder="—"
+                          style={{ width: "100%", padding: "8px 44px 8px 10px", border: "1.5px solid " + (String(form.economics?.[fd.id] ?? "").trim() ? "#c3ddd0" : "#e2e8f0"), borderRadius: 6, fontSize: 12.5, fontFamily: FONT.sans, boxSizing: "border-box" }} />
+                        <span style={{ position: "absolute", right: 9, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: C.textMuted, fontFamily: FONT.sans }}>{fd.unit}</span>
+                      </div>
+                      {(fd.help || fd.isDefault) && (
+                        <div style={{ fontFamily: FONT.sans, fontSize: 9.5, color: fd.isDefault ? "#92400e" : C.textMuted, marginTop: 3 }}>
+                          {fd.isDefault ? "Industry default, edit to your actuals" : fd.help}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer */}

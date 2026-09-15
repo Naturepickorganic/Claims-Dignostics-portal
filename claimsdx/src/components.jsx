@@ -13,6 +13,20 @@ export function VMLogo({ size = "md" }) {
   const s = size === "lg" ? { box: 44, font: 18, sub: 10 }
            : size === "sm" ? { box: 30, font: 13, sub: 8 }
            : { box: 36, font: 15, sub: 9 };
+  // Official ValueMomentum logo: drop the brand asset at claimsdx/public/vm-logo.png
+  // and it renders automatically; the drawn mark below is the fallback.
+  const [officialLogo, setOfficialLogo] = useState(true);
+  if (officialLogo) {
+    // Dark plate behind the asset so the dark background logo variant reads on light pages
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ background: "#13301f", borderRadius: 8, padding: "7px 12px", display: "flex", alignItems: "center" }}>
+          <img src="/vm-logo.png" alt="ValueMomentum ClaimsDx" style={{ height: s.box - 4, display: "block" }}
+            onError={() => setOfficialLogo(false)} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       {/* Logomark — forest green square with white VM */}
@@ -34,6 +48,28 @@ export function VMLogo({ size = "md" }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function SidebarBrand({ collapsed, sub = "VALUEMOMENTUM" }) {
+  const [officialLogo, setOfficialLogo] = useState(true);
+  if (officialLogo) {
+    return (
+      <img src="/vm-logo.png" alt="ValueMomentum ClaimsDx"
+        style={{ height: collapsed ? 26 : 34, maxWidth: collapsed ? 44 : 176, objectFit: "contain", display: "block" }}
+        onError={() => setOfficialLogo(false)} />
+    );
+  }
+  return (
+    <>
+      <div style={{ width: 32, height: 32, borderRadius: 7, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.serif, fontWeight: 800, fontSize: 14, color: "white", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>VM</div>
+      {!collapsed && (
+        <div>
+          <div style={{ fontFamily: FONT.serif, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>ClaimsDx</div>
+          <div style={{ fontFamily: FONT.sans, fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{sub}</div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -433,13 +469,7 @@ export function Sidebar({ active, role, profile, onNavigate, onLogout, collapsed
     }}>
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "18px 0" : "18px 20px", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.serif, fontWeight: 800, fontSize: 14, color: "white", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>VM</div>
-        {!collapsed && (
-          <div>
-            <div style={{ fontFamily: FONT.serif, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>ClaimsDx</div>
-            <div style={{ fontFamily: FONT.sans, fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", marginTop: 2 }}>VALUEMOMENTUM</div>
-          </div>
-        )}
+        <SidebarBrand collapsed={collapsed} />
       </div>
 
       {/* Nav items */}
@@ -557,13 +587,7 @@ export function AssessmentSidebar({
     }}>
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: collapsed ? "18px 0" : "18px 20px", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div style={{ width: 32, height: 32, borderRadius: 7, background: "#1a4731", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.serif, fontWeight: 800, fontSize: 14, color: "white", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>VM</div>
-        {!collapsed && (
-          <div>
-            <div style={{ fontFamily: FONT.serif, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>ClaimsDx</div>
-            <div style={{ fontFamily: FONT.sans, fontSize: 8, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", marginTop: 2 }}>ASSESSMENT</div>
-          </div>
-        )}
+        <SidebarBrand collapsed={collapsed} sub="ASSESSMENT" />
       </div>
 
       {/* Carrier context */}

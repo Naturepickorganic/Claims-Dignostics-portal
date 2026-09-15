@@ -48,7 +48,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
@@ -71,9 +71,9 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims volume",
-      "units": "US$",
+      "units": "Number",
       "tier1": {
         "bicMin": 50000,
         "bicMax": 2000000,
@@ -1246,7 +1246,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
@@ -1269,7 +1269,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims volume",
       "units": "Number",
       "tier1": {
@@ -2352,7 +2352,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
@@ -2375,7 +2375,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims volume",
       "units": "Number",
       "tier1": {
@@ -3228,7 +3228,7 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
@@ -3251,9 +3251,9 @@ export const BENCHMARK_DATA = {
       }
     },
     {
-      "category": "Cost metrics",
+      "category": "Productivity and efficiency metrics",
       "metric": "Claims volume",
-      "units": "US$",
+      "units": "Number",
       "tier1": {
         "bicMin": 25000,
         "bicMax": 80000,

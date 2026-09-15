@@ -177,7 +177,7 @@ function AssessmentRow({ a, onResume, onView, onCarrierClick }) {
 
 // ── Main export ────────────────────────────────────────────────
 export default function DashboardPage({ onNewAssessment, onResume, onViewResults, onCarrierProfile, profile }) {
-  const { session, loadProgress } = useApp();
+  const { session, loadProgress, loadProgressById } = useApp();
   const [viewMode, setViewMode] = useState("list");
   const [search, setSearch]     = useState("");
   const [statusFilter, setStatus] = useState("all");
@@ -210,7 +210,10 @@ export default function DashboardPage({ onNewAssessment, onResume, onViewResults
 
   // Resume: load actual saved progress from Supabase/localStorage, then restore
   const handleResume = async (a) => {
-    const saved = await loadProgress();
+    // Load the progress of the SPECIFIC row clicked; fall back to latest own progress
+    const saved = a?.assessment_id
+      ? await loadProgressById(a.assessment_id)
+      : await loadProgress();
     if (saved) {
       onResume(saved);
     } else {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Nav, AppShell, AssessmentSidebar } from "./components.jsx";
+import { upsertCarrierEconomics } from "./lib/progressDB.js";
 import { useApp, ROLE_ACCESS } from "./AppContext.jsx";
 import { Save, Loader } from "lucide-react";
 import { C, FONT } from "./constants.js";
@@ -30,7 +31,7 @@ export default function App() {
   const {
     session, profile, authLoading,
     signOut, role,
-    saveProgress, loadProgress, clearProgress, saveStatus, lastSavedAt,
+    saveProgress, loadProgress, loadProgressById, clearProgress, saveStatus, lastSavedAt,
   } = useApp();
 
   // Track when this assessment was started (set on first entry to page 2+)
@@ -177,7 +178,10 @@ export default function App() {
         role={role}
         profile={profile}
         onLogout={handleLogout}
-        onResumeAssessment={resumeAssessment}
+        onResumeAssessment={async (obj) => {
+          const saved = obj?.assessment_id ? await loadProgressById(obj.assessment_id) : null;
+          resumeAssessment(saved || obj);
+        }}
         embedded
       />
     </AppShell>
@@ -311,7 +315,7 @@ export default function App() {
       )}
 
       {page===1 && <Page1 onNext={()=>setPage(2)} onDashboard={()=>setView("dashboard")} role={role} />}
-      {page===2 && canAccess(2) && <Page2 onNext={()=>setPage(3)} onBack={()=>setPage(1)} onCarrierInfo={setCarrierInfo} initialData={carrierInfo} />}
+      {page===2 && canAccess(2) && <Page2 onNext={()=>setPage(3)} onBack={()=>setPage(1)} onCarrierInfo={(info)=>{ setCarrierInfo(info); if (info?.naic && info?.economics) { upsertCarrierEconomics(info.naic, info.name, info.economics, session?.user?.id).catch(()=>{}); } }} initialData={carrierInfo} />}
       {page===3 && canAccess(3) && <Page3 onNext={handlePathSelect} onBack={()=>setPage(2)} />}
       {page===4 && canAccess(4) && <Page4
           onNext={(vals)=>{ const md=vals||metricsData; setMetricsData(md); saveProgress({ page:5, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData:md }); setPage(5); }}
