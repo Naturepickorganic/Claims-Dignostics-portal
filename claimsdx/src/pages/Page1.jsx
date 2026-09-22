@@ -35,7 +35,7 @@ export default function Page1({ onNext, role }) {
               Begin Assessment <ArrowRight size={16} />
             </button>
             <div style={{ display: "flex", gap: 20 }}>
-              {[["~25 min", "to complete"], ["190+", "benchmark metrics"], ["5", "value lenses"]].map(([v, l]) => (
+              {[["~25 min", "to complete"], ["172", "benchmark metrics"], ["5", "value lenses"]].map(([v, l]) => (
                 <div key={l}>
                   <div style={{ fontFamily: FONT.mono, fontSize: 16, fontWeight: 700, color: "#1a4731" }}>{v}</div>
                   <div style={{ fontSize: 11, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.07em" }}>{l}</div>

@@ -2,12 +2,16 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, Download, RotateCcw, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, card, SAMPLE_SCORES, LENS_COLORS } from "../constants.js";
 import { Tag, ScoreRing, GapBadge, PageWrap } from "../components.jsx";
-import { loadAssessmentMetrics } from "../lib/progressDB.js";
+import { loadAssessmentMetrics, loadProgressByAssessmentIdFromDB, getCarrierEconomics } from "../lib/progressDB.js";
 import { useApp } from "../AppContext.jsx";
+import { runEngine } from "../engine/claimsEngine.js";
 import { BENCHMARK_DATA } from "../benchmarkData.js";
+import { QUESTIONS_DATA } from "../questionsData.js";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BENCH_CAT_TO_LENS, BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_SHORT,
-  getUniqueBenchKeys, getMetricsForLob, isHigherBetter,
+  getUniqueBenchKeys, getMetricsForLob, isHigherBetter, metricDirection, isContextMetric,
   getBenchForTier, makeMetricKey, computeLensScores,
 } from "../benchmarkHelpers.js";
 
@@ -58,9 +62,13 @@ function calcValueOpportunities(lensScores, tier=2) {
   const DWP = tier===1 ? 7000 : tier===2 ? 2500 : 750; // $M
   const opportunities = [];
 
-  const procEff = lensScores.process_efficiency || 65;
-  const finLeak = lensScores.financial_leakage  || 65;
-  const tech    = lensScores.technology         || 65;
+  // v41: when a lens has no scored metrics, derive from the average of available
+  // lenses instead of showing a constant, so carriers stop looking identical.
+  const availableLens = Object.values(lensScores);
+  const lensAvg = availableLens.length ? Math.round(availableLens.reduce((a,b)=>a+b,0)/availableLens.length) : 65;
+  const procEff = lensScores.process_efficiency ?? lensAvg;
+  const finLeak = lensScores.financial_leakage  ?? lensAvg;
+  const tech    = lensScores.technology         ?? lensAvg;
 
   // Subrogation recovery: financial leakage gap × 8% of DWP (industry avg subrogable losses)
   const subGap = Math.max(0, 65 - finLeak) / 100;
@@ -313,7 +321,7 @@ function BenchmarkTable({ carrierLobs, carrierTier, metricsData }) {
       if (!val || val === "") continue;
       const overKey = `${activeLobKey}:${m.metric}:${carrierTier}`;
       const bench   = benchmarkOverrides?.[overKey] || getBenchForTier(m, carrierTier);
-      const hib     = isHigherBetter(m);
+      const hib     = metricDirection(m);
       rows.push({ ...m, key, val, bench, hib });
     }
     return rows;
@@ -610,30 +618,33 @@ function TabFindings({ displayScores }) {
 }
 
 // ─── Tab: Roadmap ─────────────────────────────────────────────
-function TabRoadmap({ displayScores, valueOpps }) {
-  const horizons = [
-    {label:"Near Term (0–6 months)",color:"#166534",bg:"#f0f7f3",border:"#c3ddd0",items:[
-      {t:"Launch STP for low-complexity claims under $5K",lens:"Technology",eff:"Med",imp:"High"},
-      {t:"AI-assisted subrogation identification workflow",lens:"Financial",eff:"Low",imp:"High"},
-      {t:"Digital FNOL with real-time coverage verification",lens:"CX",eff:"Med",imp:"Med"},
-      {t:"30-day reserve accuracy checkpoint cadence",lens:"Financial",eff:"Low",imp:"Med"},
-    ]},
-    {label:"Mid Term (6–18 months)",color:"#1a4731",bg:"#f0f7f3",border:"#c3ddd0",items:[
-      {t:"Subrogation workflow upgrade with MSP Navigator",lens:"Financial",eff:"High",imp:"High"},
-      {t:"Adjuster coaching program tied to KPI scorecards",lens:"Org",eff:"Med",imp:"Med"},
-      {t:"IDP for claims correspondence modernisation",lens:"Technology",eff:"High",imp:"High"},
-      {t:"Claims portal self-service expansion",lens:"CX",eff:"Med",imp:"Med"},
-    ]},
-    {label:"Long Term (18+ months)",color:"#92400e",bg:"#fef3c7",border:"#fcd34d",items:[
-      {t:"Full omni-channel digital claims service layer",lens:"Technology",eff:"High",imp:"High"},
-      {t:"Predictive litigation analytics",lens:"Financial",eff:"High",imp:"High"},
-      {t:"Real-time ML severity prediction for reserves",lens:"Financial",eff:"High",imp:"High"},
-    ]},
-  ];
+// ─── Tab: Roadmap (v41: engine-driven, per carrier) ───────────
+const WAVE_META = {
+  STEP_1_80_20:        {label:"Near Term (0–6 months) · first 80% of addressable value", color:"#166534", bg:"#f0f7f3", border:"#c3ddd0"},
+  STEP_2_NEXT_WAVE:    {label:"Mid Term (6–18 months) · next wave to 95%",               color:"#1a4731", bg:"#f0f7f3", border:"#c3ddd0"},
+  STEP_3_TARGET_STATE: {label:"Long Term (18+ months) · target state and data build",    color:"#92400e", bg:"#fef3c7", border:"#fcd34d"},
+};
+const LABEL_META = {
+  ACT_NOW:        {t:"Act Now",         c:"#166534", bg:"#dcfce7"},
+  PRIORITY:       {t:"Priority",        c:"#1a4731", bg:"#d8ebe2"},
+  VALIDATE_PILOT: {t:"Validate / Pilot",c:"#92400e", bg:"#fef3c7"},
+  VALIDATE_FIRST: {t:"Validate First",  c:"#92400e", bg:"#fef3c7"},
+  SIZE_IT_FIRST:  {t:"Size It First",   c:"#475569", bg:"#f1f5f9"},
+  WATCH:          {t:"Watch",           c:"#64748b", bg:"#f8fafc"},
+};
+const THEME_SHORT = { SEVERITY_CONSERVATION:"Severity", AUTOMATION_LAE_REDUCTION:"Automation", ADJUSTER_EMPOWERMENT:"Adjuster", CUSTOMER_EXPERIENCE:"CX" };
+const fmtM = v => v == null ? null : v >= 1e6 ? `$${(v/1e6).toFixed(1)}M` : `$${Math.max(1, Math.round(v/1e3))}K`;
+
+function TabRoadmap({ engine, valueOpps }) {
+  const offerings = engine?.offerings || [];
+  const byWave = { STEP_1_80_20:[], STEP_2_NEXT_WAVE:[], STEP_3_TARGET_STATE:[] };
+  offerings.forEach(o => { (byWave[o.wave] || byWave.STEP_3_TARGET_STATE).push(o); });
+  const dataFields = (engine?.dataFieldsToBuild || []).slice(0, 6);
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
-      {/* Value creation — now calculated */}
+      <div style={{...card,padding:20,borderTop:"3px solid #1a4731"}}>
+        {/* Value creation — now calculated */}
       <div style={{...card,padding:20,borderTop:"3px solid #1a4731"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:8}}>
           <div>
@@ -661,48 +672,130 @@ function TabRoadmap({ displayScores, valueOpps }) {
           ⚠ Estimates are indicative only, shown as a ±5% band around the modeled midpoint, based on industry benchmarks and tier-adjusted DWP assumptions. Actual value depends on carrier-specific premium base and implementation quality.
         </div>
       </div>
-      {horizons.map(p=>(
-        <div key={p.label} style={{...card,overflow:"hidden"}}>
-          <div style={{padding:"12px 20px",background:p.bg,borderBottom:"1px solid "+p.border,borderLeft:"4px solid "+p.color}}>
-            <span style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:p.color}}>{p.label}</span>
+      </div>
+
+      {!offerings.length ? (
+        <div style={{...card,padding:24,textAlign:"center",fontFamily:FONT.sans,fontSize:12,color:C.textMuted}}>
+          Enter metric values on the Metrics step to generate this carrier's prioritized roadmap.
+        </div>
+      ) : Object.entries(byWave).map(([wave, items]) => {
+        const meta = WAVE_META[wave];
+        return (
+          <div key={wave} style={{...card,overflow:"hidden"}}>
+            <div style={{padding:"12px 20px",background:meta.bg,borderBottom:"1px solid "+meta.border,borderLeft:"4px solid "+meta.color,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontFamily:FONT.sans,fontSize:12,fontWeight:700,color:meta.color}}>{meta.label}</span>
+              <span style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted}}>{items.length} offering{items.length===1?"":"s"}</span>
+            </div>
+            {items.length === 0 && (
+              <div style={{padding:"12px 20px",fontFamily:FONT.sans,fontSize:11,color:C.textMuted,fontStyle:"italic"}}>No offerings land in this horizon for this carrier</div>
+            )}
+            {items.map((o, i) => {
+              const lm = LABEL_META[o.label] || LABEL_META.WATCH;
+              return (
+                <div key={o.offeringId} style={{display:"grid",gridTemplateColumns:"1fr 92px 118px 132px 66px",gap:10,padding:"12px 20px",borderBottom:i<items.length-1?"1px solid #edf5f0":"none",alignItems:"center"}}>
+                  <div>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                      <ArrowRight size={11} color={meta.color} style={{flexShrink:0,marginTop:3}}/>
+                      <span style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.text,lineHeight:1.4}}>{o.offering}</span>
+                    </div>
+                    {o.topKpis?.length > 0 && (
+                      <div style={{fontFamily:FONT.sans,fontSize:9.5,color:C.textMuted,marginLeft:19,marginTop:2}}>
+                        Evidence: {o.topKpis.slice(0,2).map(k=>k.name).join(" · ")}
+                      </div>
+                    )}
+                    {o.failedGates?.length > 0 && (
+                      <div style={{fontFamily:FONT.sans,fontSize:9.5,color:"#92400e",marginLeft:19,marginTop:2}}>
+                        Gate: {o.failedGates.map(g=>g.replace(/^G\d_/,"").replace(/([A-Z])/g," $1").trim().toLowerCase()).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textSoft,background:"#f7faf8",borderRadius:4,padding:"3px 8px",textAlign:"center",border:"1px solid #d8ebe2"}}>{THEME_SHORT[o.theme]||o.theme}</div>
+                  <div style={{fontFamily:FONT.sans,fontSize:9.5,fontWeight:700,color:lm.c,background:lm.bg,borderRadius:99,padding:"3px 8px",textAlign:"center"}}>{lm.t}</div>
+                  <div style={{fontFamily:FONT.mono,fontSize:10.5,fontWeight:700,color:o.addressableValue?meta.color:C.textMuted,textAlign:"center"}}>
+                    {o.addressableValue ? `${fmtM(o.addressableValue*0.95)} – ${fmtM(o.addressableValue*1.05)}` : "Size first"}
+                  </div>
+                  <div style={{fontFamily:FONT.sans,fontSize:10,fontWeight:600,color:o.confidence>=65?"#166534":"#92400e",textAlign:"center"}}>{o.confidence}%</div>
+                </div>
+              );
+            })}
           </div>
-          {p.items.map((item,i)=>(
-            <div key={item.t} style={{display:"grid",gridTemplateColumns:"1fr 90px 75px 75px",gap:10,padding:"12px 20px",borderBottom:i<p.items.length-1?"1px solid #edf5f0":"none",alignItems:"center"}}>
-              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-                <ArrowRight size={11} color={p.color} style={{flexShrink:0,marginTop:3}}/>
-                <span style={{fontFamily:FONT.sans,fontSize:12,color:C.textMid,lineHeight:1.5}}>{item.t}</span>
-              </div>
-              <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textSoft,background:"#f7faf8",borderRadius:4,padding:"3px 8px",textAlign:"center",border:"1px solid #d8ebe2"}}>{item.lens}</div>
-              <div style={{fontFamily:FONT.sans,fontSize:10,fontWeight:600,color:item.eff==="Low"?"#166534":item.eff==="Med"?"#92400e":"#991b1b",textAlign:"center"}}>{item.eff} effort</div>
-              <div style={{fontFamily:FONT.sans,fontSize:10,fontWeight:600,color:item.imp==="High"?"#166534":"#1a4731",textAlign:"center"}}>{item.imp} impact</div>
+        );
+      })}
+
+      {/* v50: input diagnostics so an empty roadmap explains itself */}
+      <div style={{fontFamily:FONT.sans,fontSize:10,color:"#94A3B8",textAlign:"right",padding:"2px 6px"}}>
+        engine inputs: {engine?.meta?.inputMetricCount ?? 0} metrics · claims volume {engine?.meta?.hasAnnualClaims ? "ok" : "MISSING"} · DEP {engine?.meta?.hasDep ? "ok" : "MISSING"} · build v52
+      </div>
+
+      {dataFields.length > 0 && (
+        <div style={{...card,padding:18,borderTop:"3px solid #92400e"}}>
+          <div style={{fontFamily:FONT.serif,fontWeight:700,fontSize:14,color:C.text,marginBottom:2}}>Data to Build Next</div>
+          <div style={{fontFamily:FONT.sans,fontSize:10.5,color:C.textMuted,marginBottom:10}}>Missing inputs that would raise sizing confidence and unlock gated offerings</div>
+          {dataFields.map((d, i) => (
+            <div key={i} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:i<dataFields.length-1?"1px solid #f1f5f9":"none"}}>
+              <span style={{fontFamily:FONT.sans,fontSize:9,fontWeight:700,color:d.priority==="HIGH"?"#991b1b":"#92400e",background:d.priority==="HIGH"?"#fee2e2":"#fef3c7",borderRadius:3,padding:"2px 6px",flexShrink:0}}>{d.priority}</span>
+              <span style={{fontFamily:FONT.sans,fontSize:11.5,color:C.textMid,flex:1}}>{d.label}</span>
+              <span style={{fontFamily:FONT.sans,fontSize:9.5,color:C.textMuted}}>{d.kind.replace(/_/g," ").toLowerCase()}</span>
             </div>
           ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
 // ─── Main Page5 ───────────────────────────────────────────────
 export default function Page5({ onBack, setPage, onNext, onDashboard, role, readOnly, assessment,
-  metricsData, maturityScores, assessmentPath, carrierInfo }) {
+  metricsData, maturityScores, processSelections, assessmentPath, carrierInfo }) {
 
   const { completeAssessment, benchmarkOverrides } = useApp();
 
   // Fix #12: load metric responses from DB for read-only Benchmark tab
   const [readOnlyMetrics, setReadOnlyMetrics] = useState({});
+  const [roCarrierInfo, setRoCarrierInfo] = useState(null);
   useEffect(() => {
-    if (readOnly && assessment?.assessment_id) {
-      loadAssessmentMetrics(assessment.assessment_id).then(({ metricsData: md }) => {
-        if (md && Object.keys(md).length > 0) setReadOnlyMetrics(md);
-      });
-    }
+    if (!readOnly || !assessment?.assessment_id) return;
+    let alive = true;
+    (async () => {
+      // v42: always load the progress snapshot for carrier info (tier, LOBs, economics),
+      // and use its metrics whenever metric_responses is empty (seeded and in-progress rows).
+      const [{ metricsData: md }, { progress }] = await Promise.all([
+        loadAssessmentMetrics(assessment.assessment_id),
+        loadProgressByAssessmentIdFromDB(assessment.assessment_id),
+      ]);
+      if (!alive) return;
+      const responses = md && Object.keys(md).length > 0 ? md : null;
+      const snapMetrics = progress?.metricsData && Object.keys(progress.metricsData).length > 0 ? progress.metricsData : null;
+      setReadOnlyMetrics(responses || snapMetrics || {});
+      if (progress?.carrierInfo) setRoCarrierInfo(progress.carrierInfo);
+      else if (assessment?.naic) {
+        // v45: completed assessments lose their progress snapshot, but the
+        // economics master survives by NAIC. Refuel the engine from there.
+        const { economics } = await getCarrierEconomics(assessment.naic);
+        if (alive && economics) setRoCarrierInfo({
+          name: assessment.carrier_name, naic: assessment.naic,
+          tier: assessment.tier, lobs: assessment.lobs || [], economics,
+        });
+      }
+    })();
+    return () => { alive = false; };
   }, [readOnly, assessment?.assessment_id]);
 
   // Effective metrics: use live data in active session, DB-loaded data in read-only
   const effectiveMetrics = readOnly
     ? (Object.keys(readOnlyMetrics).length > 0 ? readOnlyMetrics : metricsData || {})
     : (metricsData || {});
+
+  // v42: read-only views get carrier info from the snapshot, else from the assessment row
+  const effCarrierInfo = readOnly
+    ? (roCarrierInfo || carrierInfo || (assessment ? { name: assessment.carrier_name, naic: assessment.naic, tier: assessment.tier, lobs: assessment.lobs || [] } : null))
+    : carrierInfo;
+
+  // v41: decision engine drives the Roadmap tab, computed per carrier
+  const engineResult = useMemo(() => {
+    try { return runEngine({ metricsData: effectiveMetrics, carrierInfo: effCarrierInfo, benchmarkOverrides }); }
+    catch (err) { console.error("ClaimsDx engine:", err); return null; }
+  }, [effectiveMetrics, effCarrierInfo, benchmarkOverrides]);
 
   const hasMetrics  = effectiveMetrics && Object.keys(effectiveMetrics).length > 0;
   const hasMaturity = maturityScores && Object.keys(maturityScores).length > 0;
@@ -711,7 +804,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   // Compute lens scores from real data
   const lensScores = useMemo(()=>{
     if (readOnly && assessment?.lens_scores) return assessment.lens_scores;
-    if (hasMetrics)  return computeScoresFromMetrics(effectiveMetrics, carrierInfo, benchmarkOverrides);
+    if (hasMetrics)  return computeScoresFromMetrics(effectiveMetrics, effCarrierInfo, benchmarkOverrides);
     if (hasMaturity) return computeScoresFromMaturity(maturityScores);
     return {};
   }, [effectiveMetrics, maturityScores, readOnly, assessment]);
@@ -727,7 +820,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   const maturity = overall>=80?"Leading":overall>=65?"Advanced":overall>=50?"Developing":"Foundational";
   const maturityColor = overall>=80?"#166534":overall>=65?"#1a4731":overall>=50?"#92400e":"#991b1b";
 
-  const valueOpps = useMemo(()=>calcValueOpportunities(lensScores, carrierInfo?.tier||2), [lensScores, carrierInfo]);
+  const valueOpps = useMemo(()=>calcValueOpportunities(lensScores, effCarrierInfo?.tier||2), [lensScores, effCarrierInfo]);
 
   // ── Fire once when real results are available (not readOnly) ─
   // This is the "completion moment" — flips status to complete in Supabase
@@ -754,14 +847,20 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
       strengths,
       improvements,
       valueOpportunities: valueOpps.map(v => ({ label: v.label, value: v.value, basis: v.basis })),
-      tierUsed:           carrierInfo?.tier || 2,
-      lobPrimary:         carrierInfo?.lobs?.[0] || null,
+      // v51: raw inputs ride along so the snapshot survives completion forever
+      snapshotRaw: {
+        page: 5, assessmentPath,
+        carrierInfo: effCarrierInfo, metricsData: effectiveMetrics,
+        processSelections: processSelections || [], maturityScores: maturityScores || {},
+      },
+      tierUsed:           effCarrierInfo?.tier || 2,
+      lobPrimary:         effCarrierInfo?.lobs?.[0] || null,
     });
   }, [hasRealData, readOnly, overall]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── GATE: no data entered — block results ─────────────────────
   if (!hasRealData && !readOnly) {
-    const hasCarrier    = carrierInfo?.name;
+    const hasCarrier    = effCarrierInfo?.name;
     const hasPath       = !!assessmentPath;
     const pathIsMetrics = assessmentPath === "metrics";
     const pathIsProcess = assessmentPath === "process";
@@ -796,7 +895,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
           </div>
           {hasPath && (
             <div style={{marginTop:24, fontFamily:FONT.sans, fontSize:11, color:C.textMuted}}>
-              Path selected: <strong>{assessmentPath}</strong> · Carrier: <strong>{carrierInfo?.name || "not set"}</strong>
+              Path selected: <strong>{assessmentPath}</strong> · Carrier: <strong>{effCarrierInfo?.name || "not set"}</strong>
             </div>
           )}
         </div>
@@ -815,30 +914,86 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
   const [tab, setTab] = useState("comparative");
 
   // PDF export — inject full print stylesheet for consistent rendering
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    try {
     // Open the printable report in a NEW TAB so the portal stays open.
     // We clone the current results content into a fresh document and trigger
     // print there — the portal tab is never navigated away from.
+    // v42: export the full report (all tabs) when available, else the visible tab
+    const fullEl = document.getElementById("claimsdx-export-full");
     const resultsEl = document.getElementById("claimsdx-results-content");
-    const contentHTML = resultsEl ? resultsEl.innerHTML : document.body.innerHTML;
+    const contentHTML = fullEl ? fullEl.innerHTML : (resultsEl ? resultsEl.innerHTML : document.body.innerHTML);
+    // v51: designed report chrome around the sections
+    const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const carrierLabel = effCarrierInfo?.name ? effCarrierInfo.name : (assessment?.carrier_name || "Assessment");
+    const scoreVals = Array.isArray(displayScores)
+      ? displayScores.map(s => Number(s?.score)).filter(Number.isFinite)
+      : Object.values(displayScores || {}).map(Number).filter(Number.isFinite);
+    const overallForCover = scoreVals.length ? Math.round(scoreVals.reduce((a, b) => a + b, 0) / scoreVals.length) : "—";
 
-    const win = window.open("", "_blank");
-    if (!win) {
-      // Popup blocked — fall back to in-tab print but warn
-      alert("Please allow pop-ups for this site to open the PDF in a new tab. Falling back to print.");
-      window.print();
-      return;
-    }
+    // v55: Process Maturity Results section for the report
+    const toS = s => (s ? Math.round(((Number(s) - 1) / 4) * 80 + 20) : null);
+    const chip = s => s == null ? '<span class="pm-chip pm-na">—</span>'
+      : `<span class="pm-chip ${s >= 80 ? "pm-g" : s >= 60 ? "pm-a" : "pm-r"}">${s}</span>`;
+    const answeredL3 = [...new Set(Object.keys(maturityScores || {}).map(k => k.replace(/_(tech|proc)$/, "")))];
+    const pmRows = answeredL3.map(l3 => {
+      const q = QUESTIONS_DATA.find(x => x.l3 === l3);
+      const t = toS(maturityScores[l3 + "_tech"]), pr = toS(maturityScores[l3 + "_proc"]);
+      const avg = t != null && pr != null ? Math.round((t + pr) / 2) : (t ?? pr);
+      return { l1: q?.l1 || "Other", l2: q?.l2 || "", l3, t, pr, avg };
+    }).sort((x, y) => x.l1.localeCompare(y.l1) || x.l2.localeCompare(y.l2));
+    const pmDomains = {};
+    pmRows.forEach(r => { (pmDomains[r.l1] ??= []).push(r.avg); });
+    const pmOverall = pmRows.length ? Math.round(pmRows.reduce((s, r) => s + (r.avg || 0), 0) / pmRows.length) : null;
+    const processHTML = !pmRows.length ? "" : `
+      <div class="export-section">
+        <h2 class="export-h2">Process Maturity Results</h2>
+        <div class="pm-summary">
+          <div><b>${pmOverall}</b><span>Overall process maturity</span></div>
+          <div><b>${(processSelections || []).length || Object.keys(pmDomains).length}</b><span>Areas assessed</span></div>
+          <div><b>${pmRows.length}</b><span>Sub-processes scored</span></div>
+        </div>
+        <table class="pm-table">
+          <thead><tr><th>Domain</th><th>Area</th><th>Sub-process</th><th>Technology</th><th>Process</th><th>Score</th></tr></thead>
+          <tbody>
+            ${pmRows.map(r => `<tr><td>${r.l1}</td><td>${r.l2}</td><td>${r.l3}</td><td>${chip(r.t)}</td><td>${chip(r.pr)}</td><td>${chip(r.avg)}</td></tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="pm-domains">
+          ${Object.entries(pmDomains).map(([d, vals]) => {
+            const av = Math.round(vals.reduce((s, v) => s + (v || 0), 0) / vals.length);
+            return `<div class="pm-dcard"><b>${av}</b><span>${d}</span></div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    const lensStrip = Array.isArray(displayScores) && displayScores.length ? `
+      <div class="rc-lenses">${displayScores.map(s =>
+        `<div class="rc-lens"><b>${Math.round(Number(s?.score) || 0)}</b><span>${s?.label || s?.key || ""}</span></div>`).join("")}
+      </div>` : "";
+    const coverHTML = `
+      <div class="report-toolbar noprint">
+        <span>ClaimsDx Report Preview</span>
+        <button onclick="window.print()" class="report-btn">Download / Print as PDF</button>
+      </div>
+      <div class="report-cover">
+        <div class="rc-mark">
+          <svg width="54" height="34" viewBox="0 0 200 120"><path d="M20 100 L60 30 L86 70 L72 100 Z" fill="#34B233"/><path d="M72 100 L116 22 L160 100 L124 100 L104 64 Z" fill="#8FD0FF"/></svg>
+          <span>ValueMomentum · ClaimsDx</span>
+        </div>
+        <h1>Claims Diagnostic Report</h1>
+        <div class="rc-sub">${carrierLabel}${effCarrierInfo?.naic ? " · NAIC " + effCarrierInfo.naic : ""}${effCarrierInfo?.tier ? " · Tier " + effCarrierInfo.tier : ""}</div>
+        <div class="rc-meta">
+          <div><b>${overallForCover}</b><span>Overall score</span></div>
+          <div><b>${today}</b><span>Assessment date</span></div>
+          <div><b>${(effCarrierInfo?.lobs||[]).length} LOBs</b><span>Lines assessed</span></div>
+        </div>
+        ${lensStrip}
+        <div class="rc-foot">Benchmarked evidence · sized value · sequenced priorities</div>
+      </div>`;
 
-    const carrierLabel = carrierInfo?.name ? carrierInfo.name : "Assessment";
 
-    win.document.open();
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>ClaimsDx — ${carrierLabel} Results</title>
-  <style>
+
+    const reportCss = `
     @page { size: A4; margin: 15mm 12mm; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
     body { background: white; font-family: 'Inter', Arial, sans-serif; font-size: 11pt; color: #0f1a13; margin: 0; padding: 20px; }
@@ -847,25 +1002,124 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
     table { width: 100% !important; border-collapse: collapse; font-size: 9pt; }
     div[style*="box-shadow"] { box-shadow: none !important; }
     .print-break { page-break-before: always; }
+    .export-section { page-break-before: always; }
+    .export-section:first-child { page-break-before: auto; }
+    .export-h2 { font-family: Georgia, serif; font-size: 15pt; color: #1a4731; margin: 0 0 4px; padding: 10px 14px 8px; background: #f0f7f3; border-left: 4px solid #1a4731; border-radius: 4px; }
+    body { background: #ffffff; }
+    .report-toolbar { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; background: #0f2547; color: #cfe2ff; padding: 10px 18px; font: 600 12px "Segoe UI", Arial; z-index: 50; }
+    .report-btn { background: #34B233; color: white; border: none; border-radius: 7px; padding: 9px 16px; font: 700 12.5px "Segoe UI", Arial; cursor: pointer; }
+    .report-cover { text-align: center; padding: 64px 24px 44px; page-break-after: always; border-bottom: 4px solid #1a4731; margin-bottom: 26px; }
+    .rc-mark { display: flex; align-items: center; justify-content: center; gap: 10px; color: #1a4731; font: 700 13px "Segoe UI", Arial; letter-spacing: .12em; text-transform: uppercase; }
+    .report-cover h1 { font: 700 34px Georgia, serif; color: #12263f; margin: 22px 0 8px; }
+    .rc-sub { font: 500 15px "Segoe UI", Arial; color: #5a7191; }
+    .rc-meta { display: flex; justify-content: center; gap: 34px; margin: 34px 0 10px; }
+    .rc-meta div { min-width: 130px; padding: 14px 10px; border: 1px solid #d8ebe2; border-radius: 10px; background: #f7faf8; }
+    .rc-meta b { display: block; font: 800 24px "Segoe UI", Arial; color: #1a4731; }
+    .rc-meta span { font: 500 10.5px "Segoe UI", Arial; color: #5a7191; letter-spacing: .06em; text-transform: uppercase; }
+    .rc-foot { margin-top: 26px; font: italic 500 13px Georgia, serif; color: #64748b; }
+    .pm-summary { display: flex; gap: 18px; margin: 12px 0 14px; }
+    .pm-summary div { min-width: 150px; padding: 12px 10px; border: 1px solid #d8ebe2; border-radius: 9px; background: #f7faf8; text-align: center; }
+    .pm-summary b { display: block; font: 800 22px "Segoe UI", Arial; color: #1a4731; }
+    .pm-summary span { font: 500 10px "Segoe UI", Arial; color: #5a7191; letter-spacing: .06em; text-transform: uppercase; }
+    .pm-table { width: 100%; border-collapse: collapse; font: 400 10.5pt "Segoe UI", Arial; margin: 6px 0 14px; }
+    .pm-table th { background: #1a4731; color: white; text-align: left; padding: 7px 9px; font-size: 9.5pt; }
+    .pm-table td { border-bottom: 1px solid #e4ecf3; padding: 6px 9px; vertical-align: top; }
+    .pm-table tr:nth-child(even) td { background: #f8fafc; }
+    .pm-chip { display: inline-block; min-width: 30px; text-align: center; border-radius: 999px; padding: 2px 8px; font: 700 9.5pt "Segoe UI", Arial; }
+    .pm-g { background: #ddf3e1; color: #166534; } .pm-a { background: #fff2cc; color: #8a5a00; }
+    .pm-r { background: #fde2e4; color: #b3151f; } .pm-na { background: #eef1f5; color: #64748b; }
+    .pm-domains { display: flex; gap: 12px; flex-wrap: wrap; }
+    .pm-dcard { min-width: 150px; padding: 10px; border: 1px solid #d8ebe2; border-radius: 9px; background: white; text-align: center; }
+    .pm-dcard b { display: block; font: 800 19px "Segoe UI", Arial; color: #1a4731; }
+    .pm-dcard span { font: 500 9.5px "Segoe UI", Arial; color: #5a7191; }
+    .rc-lenses { display: flex; justify-content: center; gap: 12px; margin: 8px 0 4px; flex-wrap: wrap; }
+    .rc-lens { min-width: 108px; padding: 9px 8px; border: 1px solid #dbe7f0; border-radius: 9px; background: #fbfdff; }
+    .rc-lens b { display: block; font: 800 18px "Segoe UI", Arial; color: #0f4bb5; }
+    .rc-lens span { font: 500 9px "Segoe UI", Arial; color: #5a7191; letter-spacing: .04em; text-transform: uppercase; }
+    .export-section { page-break-before: always; padding: 8px 2px; }
+    .export-section:first-of-type { page-break-before: auto; }
+    @media print { .noprint { display: none !important; } }
     img, svg { max-width: 100%; }
     h1,h2,h3 { page-break-after: avoid; }
     tr, .card { page-break-inside: avoid; }
-  </style>
+  `;
+    const reportBody = `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a4731;">
+    <div style="font-family:Georgia,serif;font-size:20pt;font-weight:700;color:#1a4731;">Claims<span style="color:#0f1a13;">Dx</span> Diagnostic Report</div>
+    <div style="font-size:10pt;color:#4a6357;margin-top:4px;">${carrierLabel}${effCarrierInfo?.tier?` · Tier ${effCarrierInfo.tier}`:""} · Generated ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
+  </div>
+  ${coverHTML}\n${contentHTML}\n${processHTML}`;
+    const reportHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>ClaimsDx — ${carrierLabel} Results</title>
+  <style>${reportCss}</style>
 </head>
 <body>
-  <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a4731;">
-    <div style="font-family:Georgia,serif;font-size:20pt;font-weight:700;color:#1a4731;">Claims<span style="color:#0f1a13;">Dx</span> Diagnostic Report</div>
-    <div style="font-size:10pt;color:#4a6357;margin-top:4px;">${carrierLabel}${carrierInfo?.tier?` · Tier ${carrierInfo.tier}`:""} · Generated ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
-  </div>
-  ${contentHTML}
+${reportBody}
 </body>
-</html>`);
-    win.document.close();
+</html>`;
+    const pdfHost = document.createElement("div");
+    // v56c: on-page but behind everything — html2canvas renders reliably from here
+    pdfHost.style.cssText = "position:absolute;left:0;top:0;width:1050px;background:#ffffff;z-index:-1000;pointer-events:none";
+    pdfHost.innerHTML = `<style>${reportCss}</style>` +
+      reportBody.replace(/<div class="report-toolbar[\s\S]*?<\/div>/, "");
+    document.body.appendChild(pdfHost);
+    const fileStem = `ClaimsDx_Report_${carrierLabel.replace(/[^A-Za-z0-9]+/g, "_")}`;
+    try {
+      // capture per section so no canvas ever exceeds the browser's size cap
+      const chunks = [
+        pdfHost.querySelector(".report-cover"),
+        ...pdfHost.querySelectorAll(".export-section"),
+      ].filter(Boolean);
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+      const pageW = 297, pageH = 210, margX = 9, margY = 9;
+      const usableW = pageW - margX * 2, bottomY = pageH - margY;
+      let cursorY = margY;
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const canvas = await html2canvas(chunks[ci], { scale: 2, windowWidth: 1100, backgroundColor: "#ffffff", useCORS: true });
+        const pxPerMm = canvas.width / usableW;
+        if (bottomY - cursorY < 25) { pdf.addPage(); cursorY = margY; }   // never start in a sliver
+        let y = 0;
+        while (y < canvas.height) {
+          let availPx = Math.floor((bottomY - cursorY) * pxPerMm);
+          if (availPx < Math.ceil(8 * pxPerMm)) { pdf.addPage(); cursorY = margY; availPx = Math.floor((bottomY - cursorY) * pxPerMm); }
+          const sliceH = Math.min(availPx, canvas.height - y);
+          const slice = document.createElement("canvas");
+          slice.width = canvas.width; slice.height = sliceH;
+          slice.getContext("2d").drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+          pdf.addImage(slice.toDataURL("image/jpeg", 0.95), "JPEG", margX, cursorY, usableW, sliceH / pxPerMm);
+          y += sliceH;
+          cursorY += sliceH / pxPerMm;
+        }
+        cursorY += 5;
+        if (ci === 0) { pdf.addPage(); cursorY = margY; }   // the cover owns page one
+      }
+      const total = pdf.getNumberOfPages();
+      for (let n = 1; n <= total; n++) {
+        pdf.setPage(n); pdf.setFontSize(8); pdf.setTextColor(140, 155, 175);
+        pdf.text(`ClaimsDx · ${carrierLabel} · Page ${n} of ${total}`, pageW / 2, pageH - 4, { align: "center" });
+      }
+      pdf.save(`${fileStem}.pdf`);
+    } catch (pdfErr) {
+      console.error("ClaimsDx direct PDF failed, delivering styled HTML instead:", pdfErr);
+      const blob = new Blob([reportHtml], { type: "text/html" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileStem}.html`;
+      document.body.appendChild(link); link.click(); link.remove();
+      alert("Direct PDF generation failed on this browser, so the report was downloaded as a styled HTML file instead. Open it and press Ctrl+P to save as PDF.");
+    } finally {
+      pdfHost.remove();
+    }
+    } catch (err) {
+      console.error("ClaimsDx export failed:", err);
+      alert("Export failed: " + (err?.message || err));
+    }
 
     // Give the new tab a moment to render, then trigger its print dialog
     setTimeout(() => {
-      win.focus();
-      win.print();
+      /* v51: user prints from the toolbar */
     }, 400);
   };
 
@@ -890,7 +1144,7 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
             {readOnly&&assessment?.carrier_name?assessment.carrier_name+" — ":""}ClaimsDx Assessment Results
           </h1>
           <p style={{fontFamily:FONT.sans,fontSize:13,color:C.textSoft}}>
-            {carrierInfo?.name||assessment?.carrier_name||"Assessment"} · {carrierInfo?.lobs?.map(l=>({pa:"Personal Auto",ph:"Personal Home",ca:"Comm. Auto",cp:"Comm. Property",wc:"Workers Comp",gl:"Gen. Liability",bop:"BOP/BIP"}[l]||l)).join(", ")||"All LOBs"} · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
+            {effCarrierInfo?.name||assessment?.carrier_name||"Assessment"} · {effCarrierInfo?.lobs?.map(l=>({pa:"Personal Auto",ph:"Personal Home",ca:"Comm. Auto",cp:"Comm. Property",wc:"Workers Comp",gl:"Gen. Liability",bop:"BOP/BIP"}[l]||l)).join(", ")||"All LOBs"} · {new Date().toLocaleDateString("en-US",{month:"long",year:"numeric"})}
           </p>
         </div>
         <div style={{display:"flex",gap:10}} className="no-print">
@@ -934,9 +1188,19 @@ export default function Page5({ onBack, setPage, onNext, onDashboard, role, read
       <div id="claimsdx-results-content">
       {tab==="comparative" && <TabComparative displayScores={displayScores} valueOpps={valueOpps}/>}
       {tab==="overview"    && <TabOverview displayScores={displayScores}/>}
-      {tab==="benchmarks"  && <BenchmarkTable metricsData={effectiveMetrics} carrierLobs={carrierInfo?.lobs||[]} carrierTier={carrierInfo?.tier||2}/>}
+      {tab==="benchmarks"  && <BenchmarkTable metricsData={effectiveMetrics} carrierLobs={effCarrierInfo?.lobs||[]} carrierTier={effCarrierInfo?.tier||2}/>}
       {tab==="findings"    && <TabFindings displayScores={displayScores}/>}
-      {tab==="priorities"  && <TabRoadmap displayScores={displayScores} valueOpps={valueOpps}/>}
+      {tab==="priorities"  && <TabRoadmap engine={engineResult} valueOpps={valueOpps}/>}
+      </div>
+
+      {/* v42: full report rendered off-screen so PDF export includes every tab */}
+      <div id="claimsdx-export-full" aria-hidden="true"
+        style={{position:"absolute",left:-12000,top:0,width:1060,background:"white",pointerEvents:"none"}}>
+        <div className="export-section"><h2 className="export-h2">Comparative View</h2><TabComparative displayScores={displayScores} valueOpps={valueOpps}/></div>
+        <div className="export-section"><h2 className="export-h2">Score Overview</h2><TabOverview displayScores={displayScores}/></div>
+        <div className="export-section"><h2 className="export-h2">Benchmark Table</h2><BenchmarkTable metricsData={effectiveMetrics} carrierLobs={effCarrierInfo?.lobs||[]} carrierTier={effCarrierInfo?.tier||2}/></div>
+        <div className="export-section"><h2 className="export-h2">Key Findings</h2><TabFindings displayScores={displayScores}/></div>
+        <div className="export-section"><h2 className="export-h2">Roadmap</h2><TabRoadmap engine={engineResult} valueOpps={valueOpps}/></div>
       </div>
 
       <div style={{marginTop:28,display:"flex",justifyContent:"space-between"}} className="no-print">

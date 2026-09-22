@@ -181,6 +181,15 @@ export async function listAllAssessments() {
   return { assessments: flat, error: null };
 }
 
+export async function reopenAssessment(assessmentId) {
+  if (!SUPABASE_ENABLED || !assessmentId) return { error: null };
+  const { error } = await supabase
+    .from("assessments")
+    .update({ status: "in_progress", completed_at: null })
+    .eq("id", assessmentId);
+  return { error };
+}
+
 export async function markAssessmentComplete(assessmentId) {
   if (!SUPABASE_ENABLED) return { error: null };
   const { error } = await supabase
@@ -286,6 +295,33 @@ export async function loadProgressByAssessmentIdFromDB(assessmentId) {
   };
 }
 
+
+// ── Assessment history for one carrier (real data for CarrierProfilePage) ────
+export async function listAssessmentsForCarrier(carrierName, carrierId) {
+  if (!SUPABASE_ENABLED || (!carrierName && !carrierId)) return { assessments: [], error: null };
+  let q = supabase
+    .from("assessments")
+    .select(`
+      id, user_id, carrier_name, naic, tier, lobs, path, status, started_at, updated_at,
+      assessment_progress ( saved_at, current_page )
+    `)
+    .order("started_at", { ascending: false });
+  q = carrierName ? q.eq("carrier_name", carrierName) : q.eq("carrier_id", carrierId);
+  const { data, error } = await q;
+  if (error) return { assessments: [], error };
+  return {
+    assessments: (data || []).map(a => ({
+      assessment_id: a.id,
+      user_id: a.user_id,
+      carrier_name: a.carrier_name,
+      naic: a.naic, tier: a.tier, lobs: a.lobs, path: a.path, status: a.status,
+      started_at: a.started_at,
+      last_worked_at: a.assessment_progress?.[0]?.saved_at || null,
+      last_page: a.assessment_progress?.[0]?.current_page || null,
+    })),
+    error: null,
+  };
+}
 
 // ── Carrier Economics master (keyed by NAIC, shared across assessments) ──────
 const ECO_COLS = {

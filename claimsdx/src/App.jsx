@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Nav, AppShell, AssessmentSidebar } from "./components.jsx";
-import { upsertCarrierEconomics } from "./lib/progressDB.js";
+import { upsertCarrierEconomics, reopenAssessment, loadProgressByAssessmentIdFromDB } from "./lib/progressDB.js";
 import { useApp, ROLE_ACCESS } from "./AppContext.jsx";
 import { Save, Loader } from "lucide-react";
 import { C, FONT } from "./constants.js";
@@ -27,6 +27,7 @@ import { ResumePrompt } from "./SaveProgress.jsx";
 // "carrier"    — Carrier profile with all assessments + trend
 // "admin"      — Admin panel
 
+console.info("ClaimsDx build v52");
 export default function App() {
   const {
     session, profile, authLoading,
@@ -197,9 +198,11 @@ export default function App() {
         carrierId={carrierProfileId}
         carrierName={carrierProfileName}
         onBack={() => setView("dashboard")}
-        onViewAssessment={(a, mode) => {
-          if (mode === "resume") resumeAssessment(a);
-          else viewResults(a);
+        onViewAssessment={async (a, mode) => {
+          if (mode === "resume") {
+            const saved = a?.assessment_id ? await loadProgressById(a.assessment_id) : null;
+            resumeAssessment(saved || a);
+          } else viewResults(a);
         }}
       />
     </>
@@ -223,6 +226,17 @@ export default function App() {
         onResume={resumeAssessment}
         onViewResults={viewResults}
         onCarrierProfile={openCarrierProfile}
+        onReopen={async (asmt) => {
+          if (!window.confirm(`Reopen "${asmt.carrier_name}" for editing? It returns to In Progress until you submit again.`)) return;
+          try {
+            await reopenAssessment(asmt.assessment_id);
+            const { progress } = await loadProgressByAssessmentIdFromDB(asmt.assessment_id);
+            resumeAssessment(progress || { page: 2, carrierInfo: { name: asmt.carrier_name, naic: asmt.naic, tier: asmt.tier, lobs: asmt.lobs || [] } });
+          } catch (err) {
+            console.error("ClaimsDx reopen failed:", err);
+            alert("Reopen failed: " + (err?.message || err));
+          }
+        }}
       />
     </AppShell>
   );
@@ -324,6 +338,7 @@ export default function App() {
           onSave={(vals)=>saveProgress({ page:4, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData:vals })}
           carrierLobs={carrierInfo?.lobs || []}
           carrierTier={carrierInfo?.tier || 2}
+          metricsData={metricsData}
         />}
       {page===5 && canAccess(5) && (
         <Page5
@@ -333,7 +348,7 @@ export default function App() {
           onDashboard={()=>setView("dashboard")}
           role={role}
           metricsData={metricsData}
-          maturityScores={maturityScores}
+          maturityScores={maturityScores} processSelections={processSelections}
           assessmentPath={assessmentPath}
           carrierInfo={carrierInfo}
           onSaveResults={(results) => handleSave({ ...{ page, assessmentPath, carrierInfo, processSelections, maturityScores, metricsData }, results })}
@@ -351,6 +366,7 @@ export default function App() {
           onNext={(scores)=>{ setMaturityScores(scores); saveProgress({ page:8, assessmentPath, carrierInfo, processSelections, maturityScores:scores, metricsData }); setPage(8); }}
           onBack={()=>setPage(6)}
           processSelections={processSelections}
+          initialScores={maturityScores}
         />
       )}
 

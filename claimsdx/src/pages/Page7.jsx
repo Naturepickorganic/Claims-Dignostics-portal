@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Info, CheckCircle2 } from "lucide-react";
 import { C, FONT, btnPrimary, btnSecondary, btnGold, card } from "../constants.js";
 import { Tag } from "../components.jsx";
@@ -219,8 +219,13 @@ function L2Section({ l2Name, items, scores, onScore }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function Page7({ onNext, onBack, processSelections = [] }) {
-  const [scores, setScores] = useState({});
+export default function Page7({ onNext, onBack, processSelections = [], initialScores }) {
+  const [scores, setScores] = useState(initialScores || {});
+  // v46: hydrate saved answers arriving after mount (resume flow), user edits win
+  useEffect(() => {
+    if (initialScores && Object.keys(initialScores).length)
+      setScores(s => ({ ...initialScores, ...s }));
+  }, [initialScores]);
   const [activeL1, setActiveL1] = useState(null);
 
   const setScore = (key, val) => setScores(prev => {
@@ -366,6 +371,27 @@ export default function Page7({ onNext, onBack, processSelections = [] }) {
                   onScore={setScore}
                 />
               ))}
+
+              {/* v48: walk categories in order without hunting the left rail */}
+              {(() => {
+                const idx = questionGroups.findIndex(g => g.l1Key === activeGroup.l1Key);
+                const nextG = questionGroups[idx + 1];
+                return (
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 18 }}>
+                    {nextG ? (
+                      <button onClick={() => { setActiveL1(nextG.l1Key); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#1A4731", color: "white",
+                                 border: "none", borderRadius: 8, padding: "11px 20px", fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}>
+                        Next: {nextG.l1Display} →
+                      </button>
+                    ) : (
+                      <div style={{ fontSize: 12.5, color: C.textSoft, fontStyle: "italic", padding: "11px 4px" }}>
+                        All categories reviewed — use View Results below
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

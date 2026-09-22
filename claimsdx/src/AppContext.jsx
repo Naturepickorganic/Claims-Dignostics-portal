@@ -210,6 +210,12 @@ export function AppProvider({ children }) {
       });
       if (resErr) console.error("saveResults error:", resErr);
 
+      // v51: make the snapshot permanent so completed assessments render forever
+      if (results.snapshotRaw) {
+        const { error: snapErr } = await saveProgressToDB(userId, asmId, results.snapshotRaw);
+        if (snapErr) console.error("snapshot persist error:", snapErr);
+      }
+
       // 2. Flip status → 'complete', set completed_at
       const { error: completeErr } = await markAssessmentComplete(asmId);
       if (completeErr) console.error("markAssessmentComplete error:", completeErr);

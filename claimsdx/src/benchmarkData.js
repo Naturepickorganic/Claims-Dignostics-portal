@@ -1,4 +1,6 @@
 // Auto-generated from Process_Maturity_Model_Benchmarks_2025_FINAL.xlsx
+// v41 data repair: fraction ranges rescaled to percentages, missing tier bounds filled,
+// BIC/industry ranges made to conform to authored metric directions (engine/metricMaster.js)
 export const BENCHMARK_DATA = {
   "personal_lines": [
     {
@@ -8,7 +10,7 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 500,
         "bicMax": 1000,
-        "indMin": 800,
+        "indMin": 1000,
         "indMax": 1500
       },
       "tier2": {
@@ -52,22 +54,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.1,
-        "indMax": null
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       }
     },
     {
@@ -106,7 +108,7 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 1000,
         "bicMax": 2500,
-        "indMin": 2000,
+        "indMin": 2500,
         "indMax": 7000
       },
       "tier3": {
@@ -123,19 +125,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 500,
         "bicMax": 1250,
-        "indMin": 1000,
+        "indMin": 1250,
         "indMax": 2000
       },
       "tier2": {
         "bicMin": 900,
         "bicMax": 1600,
-        "indMin": 1450,
+        "indMin": 1600,
         "indMax": 2550
       },
       "tier3": {
         "bicMin": 1150,
         "bicMax": 2000,
-        "indMin": 1750,
+        "indMin": 2000,
         "indMax": 3800
       }
     },
@@ -146,19 +148,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 5000,
         "bicMax": 15000,
-        "indMin": 10000,
+        "indMin": 15000,
         "indMax": 25000
       },
       "tier2": {
         "bicMin": 3000,
         "bicMax": 10000,
-        "indMin": 7500,
+        "indMin": 10000,
         "indMax": 15000
       },
       "tier3": {
         "bicMin": 2000,
         "bicMax": 7500,
-        "indMin": 5000,
+        "indMin": 7500,
         "indMax": 12000
       }
     },
@@ -169,19 +171,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 250,
-        "indMin": 200,
+        "indMin": 250,
         "indMax": 500
       },
       "tier2": {
         "bicMin": 100,
         "bicMax": 400,
-        "indMin": 250,
+        "indMin": 400,
         "indMax": 750
       },
       "tier3": {
         "bicMin": 150,
         "bicMax": 500,
-        "indMin": 250,
+        "indMin": 500,
         "indMax": 800
       }
     },
@@ -190,22 +192,22 @@ export const BENCHMARK_DATA = {
       "metric": "Defense cost containment rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.15
+        "bicMin": 15.8,
+        "bicMax": 20.2,
+        "indMin": 10.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.2
+        "bicMin": 21.0,
+        "bicMax": 27.0,
+        "indMin": 15.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 31.5,
+        "bicMax": 40.5,
+        "indMin": 15.0,
+        "indMax": 30.0
       }
     },
     {
@@ -215,19 +217,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 500,
         "bicMax": 2500,
-        "indMin": 2000,
+        "indMin": 2500,
         "indMax": 10000
       },
       "tier2": {
         "bicMin": 1000,
         "bicMax": 3000,
-        "indMin": 2500,
+        "indMin": 3000,
         "indMax": 15000
       },
       "tier3": {
         "bicMin": 1500,
         "bicMax": 5000,
-        "indMin": 3000,
+        "indMin": 5000,
         "indMax": 20000
       }
     },
@@ -236,22 +238,22 @@ export const BENCHMARK_DATA = {
       "metric": "Loss ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.5,
-        "bicMax": 0.6,
-        "indMin": 0.65,
-        "indMax": 0.8
+        "bicMin": 50.0,
+        "bicMax": 60.0,
+        "indMin": 65.0,
+        "indMax": 80.0
       },
       "tier2": {
-        "bicMin": 0.5,
-        "bicMax": 0.65,
-        "indMin": 0.65,
-        "indMax": 0.85
+        "bicMin": 50.0,
+        "bicMax": 65.0,
+        "indMin": 65.0,
+        "indMax": 85.0
       },
       "tier3": {
-        "bicMin": 0.5,
-        "bicMax": 0.65,
-        "indMin": 0.65,
-        "indMax": 0.9
+        "bicMin": 50.0,
+        "bicMax": 65.0,
+        "indMin": 65.0,
+        "indMax": 90.0
       }
     },
     {
@@ -259,22 +261,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims requiring external vendor support",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.4
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.25,
-        "indMax": 0.5
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 25.0,
+        "indMax": 50.0
       }
     },
     {
@@ -282,22 +284,22 @@ export const BENCHMARK_DATA = {
       "metric": "Policy limit utilization rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.05,
-        "indMax": 0.15
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -308,19 +310,19 @@ export const BENCHMARK_DATA = {
         "bicMin": 7501,
         "bicMax": 10000,
         "indMin": 5001,
-        "indMax": 10000
+        "indMax": 7501
       },
       "tier2": {
         "bicMin": 7501,
         "bicMax": 10000,
         "indMin": 5001,
-        "indMax": 10000
+        "indMax": 7501
       },
       "tier3": {
         "bicMin": 7501,
         "bicMax": 10000,
         "indMin": 5001,
-        "indMax": 10000
+        "indMax": 7501
       }
     },
     {
@@ -328,22 +330,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims using non-preferred provider organizations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": null
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.3,
-        "indMax": null
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 30.0,
+        "indMax": 50.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.3,
-        "indMax": 0.5
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 30.0,
+        "indMax": 50.0
       }
     },
     {
@@ -351,22 +353,22 @@ export const BENCHMARK_DATA = {
       "metric": "Average Preferred Provider Cost Variance (PPCV)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.15,
-        "bicMax": 0.25,
-        "indMin": 0.05,
-        "indMax": 0.1
+        "bicMin": 1.8,
+        "bicMax": 3.5,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -376,19 +378,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 250,
         "bicMax": 2000,
-        "indMin": 600,
+        "indMin": 2000,
         "indMax": 3000
       },
       "tier2": {
         "bicMin": 500,
         "bicMax": 3000,
-        "indMin": 800,
+        "indMin": 3000,
         "indMax": 5000
       },
       "tier3": {
         "bicMin": 750,
         "bicMax": 4500,
-        "indMin": 1000,
+        "indMin": 4500,
         "indMax": 7500
       }
     },
@@ -399,19 +401,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 500,
         "bicMax": 2500,
-        "indMin": 2000,
+        "indMin": 2500,
         "indMax": 5000
       },
       "tier2": {
         "bicMin": 750,
         "bicMax": 3000,
-        "indMin": 2500,
+        "indMin": 3000,
         "indMax": 7500
       },
       "tier3": {
         "bicMin": 1000,
         "bicMax": 4000,
-        "indMin": 3000,
+        "indMin": 4000,
         "indMax": 12500
       }
     },
@@ -420,22 +422,22 @@ export const BENCHMARK_DATA = {
       "metric": "Technical Accuracy (Leakage)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.05,
-        "indMin": 0.05,
-        "indMax": 0.1
+        "bicMin": 2.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.06,
-        "indMin": 0.06,
-        "indMax": 0.12
+        "bicMin": 3.0,
+        "bicMax": 6.0,
+        "indMin": 6.0,
+        "indMax": 12.0
       },
       "tier3": {
-        "bicMin": 0.03,
-        "bicMax": 0.06,
-        "indMin": 0.08,
-        "indMax": 0.15
+        "bicMin": 3.0,
+        "bicMax": 6.0,
+        "indMin": 8.0,
+        "indMax": 15.0
       }
     },
     {
@@ -443,22 +445,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average indemnity cost estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 0.95,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 90.0,
+        "bicMax": 95.0,
+        "indMin": 70.0,
+        "indMax": 80.0
       },
       "tier2": {
-        "bicMin": 0.85,
-        "bicMax": 0.9,
-        "indMin": 0.6,
-        "indMax": 0.7
+        "bicMin": 85.0,
+        "bicMax": 90.0,
+        "indMin": 60.0,
+        "indMax": 70.0
       },
       "tier3": {
-        "bicMin": 0.8,
-        "bicMax": 0.9,
-        "indMin": 0.6,
-        "indMax": 0.7
+        "bicMin": 80.0,
+        "bicMax": 90.0,
+        "indMin": 60.0,
+        "indMax": 70.0
       }
     },
     {
@@ -466,22 +468,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average loss adjustment expense estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 0.98,
-        "indMin": 0.85,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 98.0,
+        "indMin": 85.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.85,
-        "bicMax": 0.95,
-        "indMin": 0.6,
-        "indMax": 0.7
+        "bicMin": 85.0,
+        "bicMax": 95.0,
+        "indMin": 60.0,
+        "indMax": 70.0
       },
       "tier3": {
-        "bicMin": 0.8,
-        "bicMax": 0.9,
-        "indMin": 0.5,
-        "indMax": 0.7
+        "bicMin": 80.0,
+        "bicMax": 90.0,
+        "indMin": 50.0,
+        "indMax": 70.0
       }
     },
     {
@@ -489,22 +491,22 @@ export const BENCHMARK_DATA = {
       "metric": "Fraud detection rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.45,
-        "bicMax": 0.5,
-        "indMin": 0.15,
-        "indMax": 0.25
+        "bicMin": 45.0,
+        "bicMax": 50.0,
+        "indMin": 15.0,
+        "indMax": 25.0
       },
       "tier2": {
-        "bicMin": 0.3,
-        "bicMax": 0.35,
-        "indMin": 0.05,
-        "indMax": 0.15
+        "bicMin": 30.0,
+        "bicMax": 35.0,
+        "indMin": 5.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.2,
-        "bicMax": 0.25,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 20.0,
+        "bicMax": 25.0,
+        "indMin": 1.0,
+        "indMax": 5.0
       }
     },
     {
@@ -512,22 +514,22 @@ export const BENCHMARK_DATA = {
       "metric": "Litigation rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.01,
-        "indMax": 0.15
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 15.0
       }
     },
     {
@@ -535,22 +537,22 @@ export const BENCHMARK_DATA = {
       "metric": "SIU referral rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.03,
-        "indMax": 0.07
+        "bicMin": 7.4,
+        "bicMax": 9.5,
+        "indMin": 3.0,
+        "indMax": 7.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.03,
-        "indMax": 0.07
+        "bicMin": 7.4,
+        "bicMax": 9.5,
+        "indMin": 3.0,
+        "indMax": 7.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.04,
-        "indMax": 0.06
+        "bicMin": 6.3,
+        "bicMax": 8.1,
+        "indMin": 4.0,
+        "indMax": 6.0
       }
     },
     {
@@ -558,22 +560,22 @@ export const BENCHMARK_DATA = {
       "metric": "Reserve accuracy",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.9,
-        "indMax": 1
+        "bicMin": 100,
+        "bicMax": 100.0,
+        "indMin": 90.0,
+        "indMax": 99.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 80.0
       }
     },
     {
@@ -581,22 +583,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims resolution Customer Satisfaction (CSAT) score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.91,
-        "bicMax": null,
-        "indMin": 0.71,
-        "indMax": 0.8
+        "bicMin": 91.0,
+        "bicMax": 100.0,
+        "indMin": 71.0,
+        "indMax": 80.0
       },
       "tier2": {
-        "bicMin": 0.91,
-        "bicMax": null,
-        "indMin": 0.91,
-        "indMax": null
+        "bicMin": 91.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 91.0
       },
       "tier3": {
-        "bicMin": 0.81,
-        "bicMax": null,
-        "indMin": 0.61,
-        "indMax": null
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 61.0,
+        "indMax": 80.0
       }
     },
     {
@@ -604,22 +606,22 @@ export const BENCHMARK_DATA = {
       "metric": "Client retention rate post claim",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.83,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 83.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 80.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 80.0
       }
     },
     {
@@ -627,21 +629,21 @@ export const BENCHMARK_DATA = {
       "metric": "Time to initial response",
       "units": "Days",
       "tier1": {
-        "bicMin": null,
+        "bicMin": 0.1,
         "bicMax": 0.2,
-        "indMin": 0.1,
+        "indMin": 0.2,
         "indMax": 1
       },
       "tier2": {
         "bicMin": 0.1,
         "bicMax": 0.5,
-        "indMin": 0.1,
+        "indMin": 0.5,
         "indMax": 2
       },
       "tier3": {
         "bicMin": 0.2,
         "bicMax": 1,
-        "indMin": 0.5,
+        "indMin": 1,
         "indMax": 3
       }
     },
@@ -650,22 +652,22 @@ export const BENCHMARK_DATA = {
       "metric": "AI utilization in claims operations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.8,
-        "bicMax": 0.9,
-        "indMin": 0.45,
-        "indMax": 0.6
+        "bicMin": 80.0,
+        "bicMax": 90.0,
+        "indMin": 45.0,
+        "indMax": 60.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.25,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 25.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.45,
-        "bicMax": 0.6,
-        "indMin": 0.05,
-        "indMax": 0.3
+        "bicMin": 45.0,
+        "bicMax": 60.0,
+        "indMin": 5.0,
+        "indMax": 30.0
       }
     },
     {
@@ -675,20 +677,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 6,
         "bicMax": 12,
-        "indMin": 6,
-        "indMax": 12
+        "indMin": 3.3,
+        "indMax": 19.2
       },
       "tier2": {
         "bicMin": 5,
         "bicMax": 10,
-        "indMin": 5,
-        "indMax": 10
+        "indMin": 2.8,
+        "indMax": 16.0
       },
       "tier3": {
         "bicMin": 5,
         "bicMax": 10,
-        "indMin": 5,
-        "indMax": 10
+        "indMin": 2.8,
+        "indMax": 16.0
       }
     },
     {
@@ -698,20 +700,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 200,
         "bicMax": 250,
-        "indMin": 200,
-        "indMax": 250
+        "indMin": 110,
+        "indMax": 400
       },
       "tier2": {
         "bicMin": 160,
         "bicMax": 200,
-        "indMin": 160,
-        "indMax": 200
+        "indMin": 88.0,
+        "indMax": 320
       },
       "tier3": {
         "bicMin": 160,
         "bicMax": 200,
-        "indMin": 160,
-        "indMax": 200
+        "indMin": 88.0,
+        "indMax": 320
       }
     },
     {
@@ -719,22 +721,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation Assignment Ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.7,
-        "bicMax": 0.9,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 70.0,
+        "bicMax": 90.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.8,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 60.0,
+        "bicMax": 80.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.5,
-        "bicMax": 0.6,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 50.0,
+        "bicMax": 60.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       }
     },
     {
@@ -744,7 +746,7 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 10,
-        "indMin": 6,
+        "indMin": 10,
         "indMax": 10
       },
       "tier2": {
@@ -813,7 +815,7 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 10,
-        "indMin": 5,
+        "indMin": 10,
         "indMax": 10
       },
       "tier2": {
@@ -880,22 +882,22 @@ export const BENCHMARK_DATA = {
       "metric": "Digital claims satisfaction score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.71,
-        "indMax": null
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 71.0
       },
       "tier2": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.61,
-        "indMax": 0.7
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 61.0,
+        "indMax": 70.0
       },
       "tier3": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.61,
-        "indMax": 0.7
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 61.0,
+        "indMax": 70.0
       }
     },
     {
@@ -903,22 +905,22 @@ export const BENCHMARK_DATA = {
       "metric": "FNOL (First Notice of Loss) digital submission rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.71,
-        "bicMax": null,
-        "indMin": 0.41,
-        "indMax": null
+        "bicMin": 71.0,
+        "bicMax": 88.8,
+        "indMin": 41.0,
+        "indMax": 67.5
       },
       "tier2": {
-        "bicMin": 0.51,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": null
+        "bicMin": 51.0,
+        "bicMax": 63.8,
+        "indMin": 31.0,
+        "indMax": 48.4
       },
       "tier3": {
-        "bicMin": 0.51,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": null
+        "bicMin": 51.0,
+        "bicMax": 63.8,
+        "indMin": 31.0,
+        "indMax": 48.4
       }
     },
     {
@@ -926,22 +928,22 @@ export const BENCHMARK_DATA = {
       "metric": "Remote inspection completion rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.75,
-        "bicMax": 0.9,
-        "indMin": 0.4,
-        "indMax": 0.6
+        "bicMin": 75.0,
+        "bicMax": 90.0,
+        "indMin": 40.0,
+        "indMax": 60.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.8,
-        "indMin": 0.25,
-        "indMax": 0.5
+        "bicMin": 60.0,
+        "bicMax": 80.0,
+        "indMin": 25.0,
+        "indMax": 50.0
       },
       "tier3": {
-        "bicMin": 0.5,
-        "bicMax": 0.6,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 50.0,
+        "bicMax": 60.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       }
     },
     {
@@ -949,22 +951,22 @@ export const BENCHMARK_DATA = {
       "metric": "Salvage recovery rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.11,
-        "indMax": 0.2
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 11.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.11,
-        "indMax": 0.2
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 11.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -972,22 +974,22 @@ export const BENCHMARK_DATA = {
       "metric": "Self-service adoption rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.81,
-        "bicMax": null,
-        "indMin": 0.51,
-        "indMax": null
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 40.0,
+        "indMax": 51.0
       },
       "tier2": {
-        "bicMin": null,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": 0.4
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 31.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": null,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": 0.4
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 31.0,
+        "indMax": 40.0
       }
     },
     {
@@ -995,22 +997,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation recovery rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.51,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": null
+        "bicMin": 51.0,
+        "bicMax": 63.8,
+        "indMin": 31.0,
+        "indMax": 48.4
       },
       "tier2": {
-        "bicMin": 0.31,
-        "bicMax": null,
-        "indMin": 0.11,
-        "indMax": null
+        "bicMin": 31.0,
+        "bicMax": 38.8,
+        "indMin": 11.0,
+        "indMax": 29.4
       },
       "tier3": {
-        "bicMin": 0.31,
-        "bicMax": null,
-        "indMin": 0.11,
-        "indMax": null
+        "bicMin": 31.0,
+        "bicMax": 38.8,
+        "indMin": 11.0,
+        "indMax": 29.4
       }
     },
     {
@@ -1018,22 +1020,22 @@ export const BENCHMARK_DATA = {
       "metric": "Telematics/IoT device integration rate for claims",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.5,
-        "bicMax": null,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 50.0,
+        "bicMax": 60.0,
+        "indMin": 10.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.4,
-        "bicMax": 0.6,
-        "indMin": 0.05,
-        "indMax": 0.2
+        "bicMin": 40.0,
+        "bicMax": 60.0,
+        "indMin": 5.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.3,
-        "bicMax": 0.5,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 30.0,
+        "bicMax": 50.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -1064,20 +1066,20 @@ export const BENCHMARK_DATA = {
       "metric": "Additional living expense (ALE) days per claim",
       "units": "Days",
       "tier1": {
-        "bicMin": 45,
-        "bicMax": 60,
+        "bicMin": 15.7,
+        "bicMax": 31.5,
         "indMin": 45,
         "indMax": 60
       },
       "tier2": {
-        "bicMin": 60,
-        "bicMax": 90,
+        "bicMin": 21.0,
+        "bicMax": 42.0,
         "indMin": 60,
         "indMax": 90
       },
       "tier3": {
-        "bicMin": 60,
-        "bicMax": 90,
+        "bicMin": 21.0,
+        "bicMax": 42.0,
         "indMin": 60,
         "indMax": 90
       }
@@ -1112,7 +1114,7 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 15,
         "bicMax": 20,
-        "indMin": 18,
+        "indMin": 20,
         "indMax": 22
       },
       "tier2": {
@@ -1135,7 +1137,7 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 10,
-        "indMin": 5,
+        "indMin": 10,
         "indMax": 10
       },
       "tier2": {
@@ -1206,19 +1208,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 800,
         "bicMax": 2500,
-        "indMin": 1000,
+        "indMin": 2500,
         "indMax": 5000
       },
       "tier2": {
         "bicMin": 900,
         "bicMax": 3000,
-        "indMin": 1500,
+        "indMin": 3000,
         "indMax": 6000
       },
       "tier3": {
         "bicMin": 1000,
         "bicMax": 5000,
-        "indMin": 2000,
+        "indMin": 5000,
         "indMax": 7500
       }
     },
@@ -1229,19 +1231,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 8000,
         "bicMax": 50000,
-        "indMin": 15000,
+        "indMin": 50000,
         "indMax": 75000
       },
       "tier2": {
         "bicMin": 8000,
         "bicMax": 50000,
-        "indMin": 15000,
+        "indMin": 50000,
         "indMax": 75000
       },
       "tier3": {
         "bicMin": 5000,
         "bicMax": 30000,
-        "indMin": 10000,
+        "indMin": 30000,
         "indMax": 50000
       }
     },
@@ -1250,22 +1252,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.11,
-        "indMax": 0.2
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 11.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.11,
-        "indMax": 0.2
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 11.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -1310,7 +1312,7 @@ export const BENCHMARK_DATA = {
       "tier3": {
         "bicMin": 5000,
         "bicMax": 10000,
-        "indMin": 7500,
+        "indMin": 10000,
         "indMax": 15000
       }
     },
@@ -1321,13 +1323,13 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 800,
         "bicMax": 5000,
-        "indMin": 3500,
+        "indMin": 5000,
         "indMax": 10000
       },
       "tier2": {
         "bicMin": 900,
         "bicMax": 5500,
-        "indMin": 4000,
+        "indMin": 5500,
         "indMax": 10000
       },
       "tier3": {
@@ -1388,22 +1390,22 @@ export const BENCHMARK_DATA = {
       "metric": "Defense cost containment rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.05,
-        "indMin": 0.03,
-        "indMax": 0.12
+        "bicMin": 12.6,
+        "bicMax": 16.2,
+        "indMin": 3.0,
+        "indMax": 12.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.07,
-        "indMin": 0.06,
-        "indMax": 0.15
+        "bicMin": 15.8,
+        "bicMax": 20.2,
+        "indMin": 6.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.08,
-        "indMax": 0.2
+        "bicMin": 21.0,
+        "bicMax": 27.0,
+        "indMin": 8.0,
+        "indMax": 20.0
       }
     },
     {
@@ -1413,19 +1415,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 5000,
         "bicMax": 25000,
-        "indMin": 20000,
+        "indMin": 25000,
         "indMax": 75000
       },
       "tier2": {
         "bicMin": 7500,
         "bicMax": 30000,
-        "indMin": 25000,
+        "indMin": 30000,
         "indMax": 75000
       },
       "tier3": {
         "bicMin": 10000,
         "bicMax": 50000,
-        "indMin": 25000,
+        "indMin": 50000,
         "indMax": 100000
       }
     },
@@ -1434,22 +1436,22 @@ export const BENCHMARK_DATA = {
       "metric": "Loss ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.5,
-        "bicMax": 0.55,
-        "indMin": 0.65,
-        "indMax": 0.7
+        "bicMin": 50.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 70.0
       },
       "tier2": {
-        "bicMin": 0.55,
-        "bicMax": null,
-        "indMin": 0.65,
-        "indMax": 0.8
+        "bicMin": 55.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 80.0
       },
       "tier3": {
-        "bicMin": 0.55,
-        "bicMax": null,
-        "indMin": 0.65,
-        "indMax": 0.85
+        "bicMin": 55.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 85.0
       }
     },
     {
@@ -1457,22 +1459,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims requiring external vendor support",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.25,
-        "indMax": 0.5
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 25.0,
+        "indMax": 50.0
       }
     },
     {
@@ -1480,22 +1482,22 @@ export const BENCHMARK_DATA = {
       "metric": "Policy limit utilization rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.15,
-        "indMin": 0.05,
-        "indMax": 0.4
+        "bicMin": 2.0,
+        "bicMax": 15.0,
+        "indMin": 5.0,
+        "indMax": 40.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.2,
-        "indMin": 0.1,
-        "indMax": 0.5
+        "bicMin": 5.0,
+        "bicMax": 20.0,
+        "indMin": 10.0,
+        "indMax": 50.0
       },
       "tier3": {
-        "bicMin": 0.03,
-        "bicMax": 0.15,
-        "indMin": 0.05,
-        "indMax": 0.3
+        "bicMin": 3.0,
+        "bicMax": 15.0,
+        "indMin": 5.0,
+        "indMax": 30.0
       }
     },
     {
@@ -1506,19 +1508,19 @@ export const BENCHMARK_DATA = {
         "bicMin": 5000,
         "bicMax": 20000,
         "indMin": 2500,
-        "indMax": 15000
+        "indMax": 5000
       },
       "tier2": {
         "bicMin": 8000,
         "bicMax": 25000,
         "indMin": 3000,
-        "indMax": 17500
+        "indMax": 8000
       },
       "tier3": {
         "bicMin": 10000,
         "bicMax": 25000,
         "indMin": 5000,
-        "indMax": 20000
+        "indMax": 10000
       }
     },
     {
@@ -1526,22 +1528,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims using non-preferred provider organizations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.15,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 5.0,
+        "bicMax": 15.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.15,
-        "indMax": 0.4
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 20.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.15,
-        "bicMax": 0.3,
-        "indMin": 0.2,
-        "indMax": 0.5
+        "bicMin": 15.0,
+        "bicMax": 30.0,
+        "indMin": 30.0,
+        "indMax": 50.0
       }
     },
     {
@@ -1549,22 +1551,22 @@ export const BENCHMARK_DATA = {
       "metric": "Average Preferred Provider Cost Variance (PPCV)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.15,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.15
+        "bicMin": 3.5,
+        "bicMax": 7.0,
+        "indMin": 10.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -1574,19 +1576,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 300,
         "bicMax": 2500,
-        "indMin": 500,
+        "indMin": 2500,
         "indMax": 5000
       },
       "tier2": {
         "bicMin": 500,
         "bicMax": 3000,
-        "indMin": 500,
+        "indMin": 3000,
         "indMax": 7500
       },
       "tier3": {
         "bicMin": 750,
         "bicMax": 5000,
-        "indMin": 500,
+        "indMin": 5000,
         "indMax": 7500
       }
     },
@@ -1595,20 +1597,20 @@ export const BENCHMARK_DATA = {
       "metric": "Mitigation cost per claim",
       "units": "US$",
       "tier1": {
-        "bicMin": 6000,
-        "bicMax": 10000,
+        "bicMin": 1400,
+        "bicMax": 2800,
         "indMin": 4000,
         "indMax": 10000
       },
       "tier2": {
-        "bicMin": 5000,
-        "bicMax": 9000,
+        "bicMin": 1575,
+        "bicMax": 3150,
         "indMin": 4500,
         "indMax": 9000
       },
       "tier3": {
-        "bicMin": 4500,
-        "bicMax": 9000,
+        "bicMin": 1400,
+        "bicMax": 2800,
         "indMin": 4000,
         "indMax": 9000
       }
@@ -1618,22 +1620,22 @@ export const BENCHMARK_DATA = {
       "metric": "Technical Accuracy (Leakage)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.05,
-        "indMin": 0.03,
-        "indMax": 0.12
+        "bicMin": 2.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 12.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.08,
-        "indMin": 0.05,
-        "indMax": 0.15
+        "bicMin": 3.0,
+        "bicMax": 8.0,
+        "indMin": 8.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.06,
-        "indMax": 0.2
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       }
     },
     {
@@ -1641,22 +1643,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average indemnity cost estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.95,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.85
+        "bicMin": 95.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 85.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 75.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 75.0
       }
     },
     {
@@ -1664,22 +1666,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average loss adjustment expense estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.97,
-        "bicMax": 1,
-        "indMin": 0.85,
-        "indMax": 0.95
+        "bicMin": 97.0,
+        "bicMax": 100,
+        "indMin": 85.0,
+        "indMax": 95.0
       },
       "tier2": {
-        "bicMin": 0.95,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 95.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.75,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 75.0,
+        "indMax": 90.0
       }
     },
     {
@@ -1687,22 +1689,22 @@ export const BENCHMARK_DATA = {
       "metric": "Fraud detection rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.25,
-        "indMin": 0.03,
-        "indMax": null
+        "bicMin": 5.0,
+        "bicMax": 25.0,
+        "indMin": 3.0,
+        "indMax": 5.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.15,
-        "indMin": 0.01,
-        "indMax": 0.08
+        "bicMin": 3.0,
+        "bicMax": 15.0,
+        "indMin": 1.0,
+        "indMax": 3.0
       },
       "tier3": {
-        "bicMin": 0.02,
-        "bicMax": 0.1,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 2.0,
+        "bicMax": 10.0,
+        "indMin": 1.0,
+        "indMax": 2.0
       }
     },
     {
@@ -1710,22 +1712,22 @@ export const BENCHMARK_DATA = {
       "metric": "Litigation rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.03,
-        "bicMax": 0.06,
-        "indMin": 0.1,
-        "indMax": 0.15
+        "bicMin": 3.0,
+        "bicMax": 6.0,
+        "indMin": 10.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.06,
-        "indMin": 0.15,
-        "indMax": 0.25
+        "bicMin": 3.0,
+        "bicMax": 6.0,
+        "indMin": 15.0,
+        "indMax": 25.0
       },
       "tier3": {
-        "bicMin": 0.06,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 6.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -1733,22 +1735,22 @@ export const BENCHMARK_DATA = {
       "metric": "SIU referral rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.15,
-        "indMin": 0.03,
-        "indMax": 0.08
+        "bicMin": 1.0,
+        "bicMax": 15.0,
+        "indMin": 1.0,
+        "indMax": 3.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.02,
-        "indMax": 0.04
+        "bicMin": 1.0,
+        "bicMax": 15.0,
+        "indMin": 1.0,
+        "indMax": 2.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.02,
-        "indMax": 0.04
+        "bicMin": 1.0,
+        "bicMax": 15.0,
+        "indMin": 1.0,
+        "indMax": 2.0
       }
     },
     {
@@ -1756,22 +1758,22 @@ export const BENCHMARK_DATA = {
       "metric": "Reserve accuracy",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.95,
-        "bicMax": null,
-        "indMin": 0.9,
-        "indMax": 0.95
+        "bicMin": 95.0,
+        "bicMax": 100.0,
+        "indMin": 90.0,
+        "indMax": 95.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.85,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 85.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.85,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 85.0,
+        "indMax": 90.0
       }
     },
     {
@@ -1779,22 +1781,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims resolution Customer Satisfaction (CSAT) score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.85,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 85.0,
+        "indMax": 85.5
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.7,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 70.0,
+        "indMax": 85.5
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.7,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 70.0,
+        "indMax": 85.5
       }
     },
     {
@@ -1802,22 +1804,22 @@ export const BENCHMARK_DATA = {
       "metric": "Client retention rate post claim",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.95,
-        "bicMax": 1,
-        "indMin": 0.85,
-        "indMax": 0.9
+        "bicMin": 95.0,
+        "bicMax": 100,
+        "indMin": 85.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 75.0
       }
     },
     {
@@ -1827,19 +1829,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 0.1,
         "bicMax": 0.2,
-        "indMin": 0.1,
+        "indMin": 0.2,
         "indMax": 2
       },
       "tier2": {
         "bicMin": 0.1,
         "bicMax": 0.5,
-        "indMin": 0.1,
+        "indMin": 0.5,
         "indMax": 3
       },
       "tier3": {
         "bicMin": 0.2,
         "bicMax": 1,
-        "indMin": 0.5,
+        "indMin": 1,
         "indMax": 5
       }
     },
@@ -1848,22 +1850,22 @@ export const BENCHMARK_DATA = {
       "metric": "AI utilization in claims operations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.7,
-        "bicMax": 0.85,
-        "indMin": 0.4,
-        "indMax": 0.5
+        "bicMin": 70.0,
+        "bicMax": 85.0,
+        "indMin": 40.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.4,
-        "bicMax": 0.5,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 40.0,
+        "bicMax": 50.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       }
     },
     {
@@ -1873,20 +1875,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 10,
         "bicMax": 15,
-        "indMin": 10,
-        "indMax": 15
+        "indMin": 5.5,
+        "indMax": 24.0
       },
       "tier2": {
         "bicMin": 6,
         "bicMax": 12,
-        "indMin": 6,
-        "indMax": 12
+        "indMin": 3.3,
+        "indMax": 19.2
       },
       "tier3": {
         "bicMin": 6,
         "bicMax": 12,
-        "indMin": 6,
-        "indMax": 12
+        "indMin": 3.3,
+        "indMax": 19.2
       }
     },
     {
@@ -1896,20 +1898,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 10,
         "bicMax": 15,
-        "indMin": 10,
-        "indMax": 15
+        "indMin": 5.5,
+        "indMax": 24.0
       },
       "tier2": {
         "bicMin": 10,
         "bicMax": 15,
-        "indMin": 10,
-        "indMax": 15
+        "indMin": 5.5,
+        "indMax": 24.0
       },
       "tier3": {
         "bicMin": 8,
         "bicMax": 12,
-        "indMin": 8,
-        "indMax": 12
+        "indMin": 4.4,
+        "indMax": 19.2
       }
     },
     {
@@ -1917,22 +1919,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation Assignment Ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.6,
-        "bicMax": 0.8,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 80.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.8,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 80.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.5,
-        "bicMax": 0.7,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 50.0,
+        "bicMax": 70.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       }
     },
     {
@@ -1942,19 +1944,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 10,
         "bicMax": 25,
-        "indMin": 18,
+        "indMin": 25,
         "indMax": 35
       },
       "tier2": {
         "bicMin": 12,
         "bicMax": 30,
-        "indMin": 20,
+        "indMin": 30,
         "indMax": 40
       },
       "tier3": {
         "bicMin": 15,
         "bicMax": 30,
-        "indMin": 20,
+        "indMin": 30,
         "indMax": 45
       }
     },
@@ -2063,13 +2065,13 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 20,
         "bicMax": 60,
-        "indMin": 50,
+        "indMin": 60,
         "indMax": 120
       },
       "tier3": {
         "bicMin": 30,
         "bicMax": 80,
-        "indMin": 60,
+        "indMin": 80,
         "indMax": 150
       }
     },
@@ -2078,22 +2080,22 @@ export const BENCHMARK_DATA = {
       "metric": "Digital claims satisfaction score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 90.0
       }
     },
     {
@@ -2101,22 +2103,22 @@ export const BENCHMARK_DATA = {
       "metric": "FNOL (First Notice of Loss) digital submission rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.7,
-        "bicMax": null,
-        "indMin": 0.6,
-        "indMax": null
+        "bicMin": 70.0,
+        "bicMax": 70.0,
+        "indMin": 60.0,
+        "indMax": 60.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.5,
-        "indMax": 0.6
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 50.0,
+        "indMax": 60.0
       },
       "tier3": {
-        "bicMin": 0.6,
-        "bicMax": null,
-        "indMin": 0.3,
-        "indMax": null
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 30.0,
+        "indMax": 60.0
       }
     },
     {
@@ -2126,19 +2128,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 50,
         "bicMax": 200,
-        "indMin": 75,
+        "indMin": 200,
         "indMax": 750
       },
       "tier2": {
         "bicMin": 75,
         "bicMax": 250,
-        "indMin": 150,
+        "indMin": 250,
         "indMax": 800
       },
       "tier3": {
         "bicMin": 100,
         "bicMax": 300,
-        "indMin": 200,
+        "indMin": 300,
         "indMax": 1000
       }
     },
@@ -2147,22 +2149,22 @@ export const BENCHMARK_DATA = {
       "metric": "Salvage recovery rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.4,
-        "indMax": 0.5
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 40.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.4,
-        "bicMax": 0.5,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 40.0,
+        "bicMax": 50.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       }
     },
     {
@@ -2170,22 +2172,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation recovery rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.6,
-        "bicMax": null,
-        "indMin": 0.3,
-        "indMax": null
+        "bicMin": 40.0,
+        "bicMax": 60.0,
+        "indMin": 30.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.3,
-        "bicMax": null,
-        "indMin": 0.3,
-        "indMax": null
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 30.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.3,
-        "bicMax": 0.4,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -2193,22 +2195,22 @@ export const BENCHMARK_DATA = {
       "metric": "Telematics/IoT device integration rate for claims",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.7,
-        "bicMax": 0.8,
-        "indMin": 0.5,
-        "indMax": null
+        "bicMin": 70.0,
+        "bicMax": 80.0,
+        "indMin": 40.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.6,
-        "bicMax": 0.7,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 60.0,
+        "bicMax": 70.0,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -2224,13 +2226,13 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 20,
         "bicMax": 30,
-        "indMin": 26,
+        "indMin": 30,
         "indMax": 65
       },
       "tier3": {
         "bicMin": 20,
         "bicMax": 40,
-        "indMin": 30,
+        "indMin": 40,
         "indMax": 70
       }
     },
@@ -2264,19 +2266,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       },
       "tier2": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       },
       "tier3": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       }
     },
@@ -2312,19 +2314,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1000,
         "bicMax": 3000,
-        "indMin": 1500,
+        "indMin": 3000,
         "indMax": 5000
       },
       "tier2": {
         "bicMin": 1500,
         "bicMax": 5000,
-        "indMin": 2000,
+        "indMin": 5000,
         "indMax": 7500
       },
       "tier3": {
         "bicMin": 3000,
         "bicMax": 6000,
-        "indMin": 2500,
+        "indMin": 6000,
         "indMax": 10000
       }
     },
@@ -2341,13 +2343,13 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 5001,
         "bicMax": 10000,
-        "indMin": 7500,
+        "indMin": 10000,
         "indMax": 25000
       },
       "tier3": {
         "bicMin": 5001,
         "bicMax": 10000,
-        "indMin": 7500,
+        "indMin": 10000,
         "indMax": 25000
       }
     },
@@ -2356,22 +2358,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.11,
-        "bicMax": null,
-        "indMin": 0.21,
-        "indMax": 0.3
+        "bicMin": 11.0,
+        "bicMax": 16.5,
+        "indMin": 21.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.11,
-        "bicMax": null,
-        "indMin": 0.11,
-        "indMax": null
+        "bicMin": 11.0,
+        "bicMax": 16.5,
+        "indMin": 11.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.11,
-        "bicMax": null,
-        "indMin": 0.31,
-        "indMax": null
+        "bicMin": 11.0,
+        "bicMax": 16.5,
+        "indMin": 30.0,
+        "indMax": 31.0
       }
     },
     {
@@ -2410,7 +2412,7 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 1001,
         "bicMax": 6000,
-        "indMin": 5001,
+        "indMin": 6000,
         "indMax": 15000
       },
       "tier3": {
@@ -2433,13 +2435,13 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 2500,
         "bicMax": 8000,
-        "indMin": 5000,
+        "indMin": 8000,
         "indMax": 15000
       },
       "tier3": {
         "bicMin": 4000,
         "bicMax": 11000,
-        "indMin": 6500,
+        "indMin": 11000,
         "indMax": 20000
       }
     },
@@ -2462,7 +2464,7 @@ export const BENCHMARK_DATA = {
       "tier3": {
         "bicMin": 2501,
         "bicMax": 7500,
-        "indMin": 5001,
+        "indMin": 7500,
         "indMax": 20000
       }
     },
@@ -2485,7 +2487,7 @@ export const BENCHMARK_DATA = {
       "tier3": {
         "bicMin": 1000,
         "bicMax": 5000,
-        "indMin": 4000,
+        "indMin": 5000,
         "indMax": 10000
       }
     },
@@ -2494,22 +2496,22 @@ export const BENCHMARK_DATA = {
       "metric": "Defense cost containment rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.15
+        "bicMin": 15.8,
+        "bicMax": 20.2,
+        "indMin": 10.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 31.5,
+        "bicMax": 40.5,
+        "indMin": 20.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.3
+        "bicMin": 31.5,
+        "bicMax": 40.5,
+        "indMin": 20.0,
+        "indMax": 30.0
       }
     },
     {
@@ -2540,22 +2542,22 @@ export const BENCHMARK_DATA = {
       "metric": "Loss ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.45,
-        "bicMax": 0.55,
-        "indMin": 0.65,
-        "indMax": null
+        "bicMin": 45.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 117.0
       },
       "tier2": {
-        "bicMin": 0.45,
-        "bicMax": 0.55,
-        "indMin": 0.65,
-        "indMax": null
+        "bicMin": 45.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 117.0
       },
       "tier3": {
-        "bicMin": 0.45,
-        "bicMax": 0.55,
-        "indMin": 0.65,
-        "indMax": null
+        "bicMin": 45.0,
+        "bicMax": 55.0,
+        "indMin": 65.0,
+        "indMax": 117.0
       }
     },
     {
@@ -2563,22 +2565,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims requiring external vendor support",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.05,
-        "indMax": 0.1
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.11,
-        "indMax": 0.15
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 11.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.2
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 15.0,
+        "indMax": 20.0
       }
     },
     {
@@ -2586,22 +2588,22 @@ export const BENCHMARK_DATA = {
       "metric": "Policy limit utilization rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 1.0,
+        "bicMax": 3.0,
+        "indMin": 1.0,
+        "indMax": 5.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 1.0,
+        "bicMax": 3.0,
+        "indMin": 1.0,
+        "indMax": 5.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.03,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 1.0,
+        "bicMax": 3.0,
+        "indMin": 1.0,
+        "indMax": 5.0
       }
     },
     {
@@ -2612,19 +2614,19 @@ export const BENCHMARK_DATA = {
         "bicMin": 15000,
         "bicMax": 50000,
         "indMin": 5000,
-        "indMax": 25000
+        "indMax": 15000
       },
       "tier2": {
         "bicMin": 10000,
         "bicMax": 40000,
         "indMin": 5000,
-        "indMax": 20000
+        "indMax": 10000
       },
       "tier3": {
         "bicMin": 7500,
         "bicMax": 30000,
         "indMin": 2500,
-        "indMax": 15000
+        "indMax": 7500
       }
     },
     {
@@ -2632,22 +2634,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims using non-preferred provider organizations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.05,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 1.0,
+        "bicMax": 5.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": 0.15,
-        "indMin": 0.2,
-        "indMax": 0.4
+        "bicMin": 5.0,
+        "bicMax": 15.0,
+        "indMin": 20.0,
+        "indMax": 40.0
       }
     },
     {
@@ -2655,22 +2657,22 @@ export const BENCHMARK_DATA = {
       "metric": "Average Preferred Provider Cost Variance (PPCV)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 3.5,
+        "bicMax": 7.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 3.5,
+        "bicMax": 7.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -2680,19 +2682,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 500,
         "bicMax": 2000,
-        "indMin": 1000,
+        "indMin": 2000,
         "indMax": 3000
       },
       "tier2": {
         "bicMin": 1000,
         "bicMax": 2500,
-        "indMin": 2000,
+        "indMin": 2500,
         "indMax": 5000
       },
       "tier3": {
         "bicMin": 1500,
         "bicMax": 5000,
-        "indMin": 2500,
+        "indMin": 5000,
         "indMax": 7500
       }
     },
@@ -2715,7 +2717,7 @@ export const BENCHMARK_DATA = {
       "tier3": {
         "bicMin": 1500,
         "bicMax": 3000,
-        "indMin": 2500,
+        "indMin": 3000,
         "indMax": 7500
       }
     },
@@ -2724,22 +2726,22 @@ export const BENCHMARK_DATA = {
       "metric": "Technical Accuracy (Leakage)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.04,
-        "indMin": 0.02,
-        "indMax": 0.1
+        "bicMin": 2.0,
+        "bicMax": 4.0,
+        "indMin": 4.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.05,
-        "indMin": 0.05,
-        "indMax": null
+        "bicMin": 3.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.04,
-        "bicMax": 0.08,
-        "indMin": 0.06,
-        "indMax": 0.12
+        "bicMin": 4.0,
+        "bicMax": 8.0,
+        "indMin": 8.0,
+        "indMax": 12.0
       }
     },
     {
@@ -2747,22 +2749,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average indemnity cost estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.71,
-        "indMax": 0.8
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 71.0,
+        "indMax": 80.0
       },
       "tier2": {
-        "bicMin": 0.81,
-        "bicMax": 0.9,
-        "indMin": 0.61,
-        "indMax": 0.7
+        "bicMin": 81.0,
+        "bicMax": 90.0,
+        "indMin": 61.0,
+        "indMax": 70.0
       },
       "tier3": {
-        "bicMin": 0.81,
-        "bicMax": 0.9,
-        "indMin": 0.61,
-        "indMax": 0.7
+        "bicMin": 81.0,
+        "bicMax": 90.0,
+        "indMin": 61.0,
+        "indMax": 70.0
       }
     },
     {
@@ -2770,22 +2772,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average loss adjustment expense estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.81,
-        "indMax": 0.9
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 81.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.81,
-        "indMax": 0.9
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 81.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.91,
-        "bicMax": 1,
-        "indMin": 0.71,
-        "indMax": 0.8
+        "bicMin": 91.0,
+        "bicMax": 100,
+        "indMin": 71.0,
+        "indMax": 80.0
       }
     },
     {
@@ -2793,22 +2795,22 @@ export const BENCHMARK_DATA = {
       "metric": "Fraud detection rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.15,
-        "indMin": 0.02,
-        "indMax": 0.08
+        "bicMin": 5.0,
+        "bicMax": 15.0,
+        "indMin": 2.0,
+        "indMax": 5.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.01,
-        "indMax": 0.05
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 1.0,
+        "indMax": 1.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.01,
-        "indMax": 0.03
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 1.0,
+        "indMax": 1.0
       }
     },
     {
@@ -2816,22 +2818,22 @@ export const BENCHMARK_DATA = {
       "metric": "Litigation rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.03,
-        "bicMax": null,
-        "indMin": 0.05,
-        "indMax": 0.2
+        "bicMin": 3.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.08,
-        "indMax": 0.25
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 10.0,
+        "indMax": 25.0
       },
       "tier3": {
-        "bicMin": 0.07,
-        "bicMax": 0.15,
-        "indMin": 0.1,
-        "indMax": 0.3
+        "bicMin": 7.0,
+        "bicMax": 15.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       }
     },
     {
@@ -2839,22 +2841,22 @@ export const BENCHMARK_DATA = {
       "metric": "SIU referral rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": null,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 5.0,
+        "bicMax": 10.0,
+        "indMin": 1.0,
+        "indMax": 5.0
       },
       "tier2": {
-        "bicMin": 0.05,
-        "bicMax": 0.1,
-        "indMin": 0.11,
-        "indMax": null
+        "bicMin": 10.5,
+        "bicMax": 13.5,
+        "indMin": 10.0,
+        "indMax": 11.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": null,
-        "indMin": 0.15,
-        "indMax": null
+        "bicMin": 10.5,
+        "bicMax": 13.5,
+        "indMin": 10.0,
+        "indMax": 15.0
       }
     },
     {
@@ -2862,22 +2864,22 @@ export const BENCHMARK_DATA = {
       "metric": "Reserve accuracy",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.95,
-        "bicMax": null,
-        "indMin": 0.85,
-        "indMax": null
+        "bicMin": 95.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 85.0
       },
       "tier2": {
-        "bicMin": 0.95,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": null
+        "bicMin": 95.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 80.0
       },
       "tier3": {
-        "bicMin": 0.95,
-        "bicMax": null,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 95.0,
+        "bicMax": 100.0,
+        "indMin": 70.0,
+        "indMax": 80.0
       }
     },
     {
@@ -2885,22 +2887,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims resolution Customer Satisfaction (CSAT) score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.85,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 85.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.75,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 75.0,
+        "indMax": 90.0
       }
     },
     {
@@ -2908,22 +2910,22 @@ export const BENCHMARK_DATA = {
       "metric": "Client retention rate post claim",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 0.98,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 98.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 0.95,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 95.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.85,
-        "bicMax": 0.95,
-        "indMin": 0.75,
-        "indMax": 0.9
+        "bicMin": 85.0,
+        "bicMax": 95.0,
+        "indMin": 75.0,
+        "indMax": 85.0
       }
     },
     {
@@ -2933,19 +2935,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 0.5,
         "bicMax": 2,
-        "indMin": 1,
+        "indMin": 2,
         "indMax": 5
       },
       "tier2": {
         "bicMin": 1,
         "bicMax": 3,
-        "indMin": 1,
+        "indMin": 3,
         "indMax": 5
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 3,
-        "indMin": 1,
+        "indMin": 3,
         "indMax": 7
       }
     },
@@ -2954,22 +2956,22 @@ export const BENCHMARK_DATA = {
       "metric": "AI utilization in claims operations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.41,
-        "bicMax": 0.5,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 41.0,
+        "bicMax": 50.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.41,
-        "bicMax": 0.5,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 41.0,
+        "bicMax": 50.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -2985,14 +2987,14 @@ export const BENCHMARK_DATA = {
       "tier2": {
         "bicMin": 1,
         "bicMax": 10,
-        "indMin": 1,
-        "indMax": 10
+        "indMin": 0.6,
+        "indMax": 16.0
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 10,
-        "indMin": 1,
-        "indMax": 10
+        "indMin": 0.6,
+        "indMax": 16.0
       }
     },
     {
@@ -3002,20 +3004,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 250,
         "bicMax": 350,
-        "indMin": 250,
-        "indMax": 350
+        "indMin": 138,
+        "indMax": 560
       },
       "tier2": {
         "bicMin": 250,
         "bicMax": 350,
-        "indMin": 250,
-        "indMax": 350
+        "indMin": 138,
+        "indMax": 560
       },
       "tier3": {
         "bicMin": 250,
         "bicMax": 350,
-        "indMin": 250,
-        "indMax": 350
+        "indMin": 138,
+        "indMax": 560
       }
     },
     {
@@ -3023,22 +3025,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation Assignment Ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.25,
-        "bicMax": 0.4,
-        "indMin": 0.05,
-        "indMax": 0.15
+        "bicMin": 25.0,
+        "bicMax": 40.0,
+        "indMin": 5.0,
+        "indMax": 15.0
       },
       "tier2": {
-        "bicMin": 0.25,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.15
+        "bicMin": 25.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.15,
-        "bicMax": 0.3,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 15.0,
+        "bicMax": 30.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3048,19 +3050,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 25000,
         "bicMax": 100000,
-        "indMin": 40000,
+        "indMin": 100000,
         "indMax": 200000
       },
       "tier2": {
         "bicMin": 25000,
         "bicMax": 100000,
-        "indMin": 40000,
+        "indMin": 100000,
         "indMax": 200000
       },
       "tier3": {
         "bicMin": 25000,
         "bicMax": 100000,
-        "indMin": 40000,
+        "indMin": 100000,
         "indMax": 200000
       }
     },
@@ -3071,19 +3073,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 10,
         "bicMax": 90,
-        "indMin": 30,
+        "indMin": 90,
         "indMax": 100
       },
       "tier2": {
         "bicMin": 10,
         "bicMax": 90,
-        "indMin": 30,
+        "indMin": 90,
         "indMax": 100
       },
       "tier3": {
         "bicMin": 10,
         "bicMax": 90,
-        "indMin": 30,
+        "indMin": 90,
         "indMax": 100
       }
     },
@@ -3094,19 +3096,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 120
       },
       "tier2": {
         "bicMin": 30,
         "bicMax": 100,
-        "indMin": 80,
+        "indMin": 100,
         "indMax": 150
       },
       "tier3": {
         "bicMin": 30,
         "bicMax": 100,
-        "indMin": 80,
+        "indMin": 100,
         "indMax": 150
       }
     },
@@ -3115,22 +3117,22 @@ export const BENCHMARK_DATA = {
       "metric": "Return To Work (RTW) success rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 0.95,
-        "indMin": 0.7,
-        "indMax": 0.85
+        "bicMin": 90.0,
+        "bicMax": 95.0,
+        "indMin": 70.0,
+        "indMax": 85.0
       },
       "tier2": {
-        "bicMin": 0.8,
-        "bicMax": 0.9,
-        "indMin": 0.6,
-        "indMax": 0.75
+        "bicMin": 80.0,
+        "bicMax": 90.0,
+        "indMin": 60.0,
+        "indMax": 75.0
       },
       "tier3": {
-        "bicMin": 0.8,
-        "bicMax": 0.9,
-        "indMin": 0.6,
-        "indMax": 0.75
+        "bicMin": 80.0,
+        "bicMax": 90.0,
+        "indMin": 60.0,
+        "indMax": 75.0
       }
     },
     {
@@ -3138,22 +3140,22 @@ export const BENCHMARK_DATA = {
       "metric": "Telemedicine utilization rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.25,
-        "bicMax": 0.5,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 25.0,
+        "bicMax": 50.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.25,
-        "bicMax": 0.5,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 25.0,
+        "bicMax": 50.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.25,
-        "bicMax": 0.5,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 25.0,
+        "bicMax": 50.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3163,19 +3165,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 0.5,
         "bicMax": 5,
-        "indMin": 2,
+        "indMin": 5,
         "indMax": 10
       },
       "tier2": {
         "bicMin": 1,
         "bicMax": 7,
-        "indMin": 3,
+        "indMin": 7,
         "indMax": 15
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 7,
-        "indMin": 3,
+        "indMin": 7,
         "indMax": 15
       }
     }
@@ -3188,13 +3190,13 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 5000,
         "bicMax": 50000,
-        "indMin": 30000,
+        "indMin": 50000,
         "indMax": 100000
       },
       "tier2": {
         "bicMin": 10000,
         "bicMax": 75000,
-        "indMin": 50000,
+        "indMin": 75000,
         "indMax": 120000
       },
       "tier3": {
@@ -3211,19 +3213,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 35000,
         "bicMax": 120000,
-        "indMin": 75000,
+        "indMin": 120000,
         "indMax": 150000
       },
       "tier2": {
         "bicMin": 50000,
         "bicMax": 150000,
-        "indMin": 100000,
+        "indMin": 150000,
         "indMax": 200000
       },
       "tier3": {
         "bicMin": 50000,
         "bicMax": 150000,
-        "indMin": 100000,
+        "indMin": 150000,
         "indMax": 300000
       }
     },
@@ -3232,22 +3234,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims frequency",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.1,
-        "bicMax": 0.3,
-        "indMin": 0.5,
-        "indMax": 0.6
+        "bicMin": 10.0,
+        "bicMax": 30.0,
+        "indMin": 50.0,
+        "indMax": 60.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.4,
-        "indMax": 0.5
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 40.0,
+        "indMax": 50.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.4,
-        "indMax": 0.5
+        "bicMin": 10.0,
+        "bicMax": 20.0,
+        "indMin": 40.0,
+        "indMax": 50.0
       }
     },
     {
@@ -3280,19 +3282,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 3000,
         "bicMax": 6000,
-        "indMin": 5000,
+        "indMin": 6000,
         "indMax": 15000
       },
       "tier2": {
         "bicMin": 5000,
         "bicMax": 10000,
-        "indMin": 8000,
+        "indMin": 10000,
         "indMax": 20000
       },
       "tier3": {
         "bicMin": 6000,
         "bicMax": 15000,
-        "indMin": 10000,
+        "indMin": 15000,
         "indMax": 15000
       }
     },
@@ -3303,19 +3305,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 5000,
         "bicMax": 60000,
-        "indMin": 35000,
+        "indMin": 60000,
         "indMax": 125000
       },
       "tier2": {
         "bicMin": 10000,
         "bicMax": 90000,
-        "indMin": 62500,
+        "indMin": 90000,
         "indMax": 150000
       },
       "tier3": {
         "bicMin": 15000,
         "bicMax": 100000,
-        "indMin": 90000,
+        "indMin": 100000,
         "indMax": 200000
       }
     },
@@ -3349,19 +3351,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 10000,
-        "indMin": 5000,
+        "indMin": 10000,
         "indMax": 25000
       },
       "tier2": {
         "bicMin": 1,
         "bicMax": 15000,
-        "indMin": 12500,
+        "indMin": 15000,
         "indMax": 30000
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 25000,
-        "indMin": 15000,
+        "indMin": 25000,
         "indMax": 50000
       }
     },
@@ -3370,22 +3372,22 @@ export const BENCHMARK_DATA = {
       "metric": "Defense cost containment rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.4,
-        "indMax": 0.5
+        "bicMin": 52.5,
+        "bicMax": 67.5,
+        "indMin": 40.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 42.0,
+        "bicMax": 54.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 42.0,
+        "bicMax": 54.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       }
     },
     {
@@ -3395,19 +3397,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 5000,
         "bicMax": 50000,
-        "indMin": 25000,
+        "indMin": 50000,
         "indMax": 150000
       },
       "tier2": {
         "bicMin": 7500,
         "bicMax": 60000,
-        "indMin": 30000,
+        "indMin": 60000,
         "indMax": 175000
       },
       "tier3": {
         "bicMin": 10000,
         "bicMax": 75000,
-        "indMin": 35000,
+        "indMin": 75000,
         "indMax": 200000
       }
     },
@@ -3416,22 +3418,22 @@ export const BENCHMARK_DATA = {
       "metric": "Loss ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.65,
-        "bicMax": 0.7,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 65.0,
+        "bicMax": 70.0,
+        "indMin": 70.0,
+        "indMax": 75.0
       },
       "tier2": {
-        "bicMin": 0.65,
-        "bicMax": 0.7,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 65.0,
+        "bicMax": 70.0,
+        "indMin": 70.0,
+        "indMax": 75.0
       },
       "tier3": {
-        "bicMin": 0.65,
-        "bicMax": 0.7,
-        "indMin": 0.7,
-        "indMax": 0.75
+        "bicMin": 65.0,
+        "bicMax": 70.0,
+        "indMin": 70.0,
+        "indMax": 75.0
       }
     },
     {
@@ -3439,22 +3441,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims requiring external vendor support",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.05,
-        "bicMax": 0.2,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 5.0,
+        "bicMax": 20.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.25,
-        "indMin": 0.3,
-        "indMax": 0.4
+        "bicMin": 10.0,
+        "bicMax": 25.0,
+        "indMin": 30.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.15,
-        "bicMax": 0.3,
-        "indMin": 0.4,
-        "indMax": 0.6
+        "bicMin": 15.0,
+        "bicMax": 30.0,
+        "indMin": 40.0,
+        "indMax": 60.0
       }
     },
     {
@@ -3462,22 +3464,22 @@ export const BENCHMARK_DATA = {
       "metric": "Policy limit utilization rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.2,
-        "indMax": 0.4
+        "bicMin": 1.0,
+        "bicMax": 10.0,
+        "indMin": 20.0,
+        "indMax": 40.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.15,
-        "indMin": 0.2,
-        "indMax": 0.4
+        "bicMin": 1.0,
+        "bicMax": 15.0,
+        "indMin": 20.0,
+        "indMax": 40.0
       }
     },
     {
@@ -3488,19 +3490,19 @@ export const BENCHMARK_DATA = {
         "bicMin": 5000,
         "bicMax": 15000,
         "indMin": 2501,
-        "indMax": 10000
+        "indMax": 5000
       },
       "tier2": {
         "bicMin": 5000,
         "bicMax": 15000,
         "indMin": 2500,
-        "indMax": 10000
+        "indMax": 5000
       },
       "tier3": {
         "bicMin": 5000,
         "bicMax": 15000,
         "indMin": 2500,
-        "indMax": 10000
+        "indMax": 5000
       }
     },
     {
@@ -3508,22 +3510,22 @@ export const BENCHMARK_DATA = {
       "metric": "Percentage of claims using non-preferred provider organizations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.01,
-        "indMax": null
+        "bicMin": 1.0,
+        "bicMax": 1.5,
+        "indMin": 1.5,
+        "indMax": 1.8
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.01,
-        "indMax": null
+        "bicMin": 1.0,
+        "bicMax": 1.5,
+        "indMin": 1.5,
+        "indMax": 1.8
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": null,
-        "indMin": 0.01,
-        "indMax": null
+        "bicMin": 1.0,
+        "bicMax": 1.5,
+        "indMin": 1.5,
+        "indMax": 1.8
       }
     },
     {
@@ -3531,22 +3533,22 @@ export const BENCHMARK_DATA = {
       "metric": "Average Preferred Provider Cost Variance (PPCV)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 3.5,
+        "bicMax": 7.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.1,
-        "bicMax": 0.2,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 0.3,
+        "bicMax": 0.7,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3556,19 +3558,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 2501,
         "bicMax": 15000,
-        "indMin": 7501,
+        "indMin": 15000,
         "indMax": 25000
       },
       "tier2": {
         "bicMin": 1001,
         "bicMax": 10000,
-        "indMin": 5001,
+        "indMin": 10000,
         "indMax": 15000
       },
       "tier3": {
         "bicMin": 1001,
         "bicMax": 7500,
-        "indMin": 5001,
+        "indMin": 7500,
         "indMax": 10000
       }
     },
@@ -3579,19 +3581,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 2500,
-        "indMin": 1001,
+        "indMin": 2500,
         "indMax": 5000
       },
       "tier2": {
         "bicMin": 1,
         "bicMax": 2500,
-        "indMin": 10001,
-        "indMax": 5000
+        "indMin": 5000,
+        "indMax": 10001
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 2500,
-        "indMin": 1001,
+        "indMin": 2500,
         "indMax": 5000
       }
     },
@@ -3600,22 +3602,22 @@ export const BENCHMARK_DATA = {
       "metric": "Technical Accuracy (Leakage)",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.02,
-        "bicMax": 0.05,
-        "indMin": 0.03,
-        "indMax": 0.12
+        "bicMin": 2.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 12.0
       },
       "tier2": {
-        "bicMin": 0.03,
-        "bicMax": 0.05,
-        "indMin": 0.05,
-        "indMax": 0.15
+        "bicMin": 3.0,
+        "bicMax": 5.0,
+        "indMin": 5.0,
+        "indMax": 15.0
       },
       "tier3": {
-        "bicMin": 0.05,
-        "bicMax": null,
-        "indMin": 0.075,
-        "indMax": 0.25
+        "bicMin": 5.0,
+        "bicMax": 5.0,
+        "indMin": 7.5,
+        "indMax": 25.0
       }
     },
     {
@@ -3623,22 +3625,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average indemnity cost estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       }
     },
     {
@@ -3646,22 +3648,22 @@ export const BENCHMARK_DATA = {
       "metric": "Accuracy of average loss adjustment expense estimates",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       }
     },
     {
@@ -3669,22 +3671,22 @@ export const BENCHMARK_DATA = {
       "metric": "Fraud detection rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.21,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 21.0,
+        "bicMax": 30.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 20.0,
+        "bicMax": 30.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 20.0,
+        "bicMax": 30.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3692,22 +3694,22 @@ export const BENCHMARK_DATA = {
       "metric": "Litigation rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.2,
-        "bicMax": 0.3,
-        "indMin": 0.3,
-        "indMax": 0.5
+        "bicMin": 20.0,
+        "bicMax": 30.0,
+        "indMin": 30.0,
+        "indMax": 50.0
       },
       "tier2": {
-        "bicMin": 0.3,
-        "bicMax": 0.4,
-        "indMin": 0.4,
-        "indMax": 0.6
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 40.0,
+        "indMax": 60.0
       },
       "tier3": {
-        "bicMin": 0.3,
-        "bicMax": 0.4,
-        "indMin": 0.5,
-        "indMax": 0.7
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 50.0,
+        "indMax": 70.0
       }
     },
     {
@@ -3715,22 +3717,22 @@ export const BENCHMARK_DATA = {
       "metric": "SIU referral rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 21.0,
+        "bicMax": 27.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier2": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 10.5,
+        "bicMax": 13.5,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.01,
-        "bicMax": 0.1,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 10.5,
+        "bicMax": 13.5,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3738,22 +3740,22 @@ export const BENCHMARK_DATA = {
       "metric": "Reserve accuracy",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": 1,
-        "indMin": 0.7,
-        "indMax": 0.8
+        "bicMin": 90.0,
+        "bicMax": 100,
+        "indMin": 70.0,
+        "indMax": 80.0
       }
     },
     {
@@ -3761,22 +3763,22 @@ export const BENCHMARK_DATA = {
       "metric": "Claims resolution Customer Satisfaction (CSAT) score",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.7,
-        "indMax": null
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 70.0,
+        "indMax": 85.5
       },
       "tier2": {
-        "bicMin": 0.8,
-        "bicMax": null,
-        "indMin": 0.6,
-        "indMax": null
+        "bicMin": 80.0,
+        "bicMax": 100.0,
+        "indMin": 60.0,
+        "indMax": 76.0
       },
       "tier3": {
-        "bicMin": 0.8,
-        "bicMax": null,
-        "indMin": 0.6,
-        "indMax": null
+        "bicMin": 80.0,
+        "bicMax": 100.0,
+        "indMin": 60.0,
+        "indMax": 76.0
       }
     },
     {
@@ -3784,22 +3786,22 @@ export const BENCHMARK_DATA = {
       "metric": "Client retention rate post claim",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier2": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       },
       "tier3": {
-        "bicMin": 0.9,
-        "bicMax": null,
-        "indMin": 0.8,
-        "indMax": 0.9
+        "bicMin": 90.0,
+        "bicMax": 100.0,
+        "indMin": 80.0,
+        "indMax": 90.0
       }
     },
     {
@@ -3809,19 +3811,19 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 1,
         "bicMax": 3,
-        "indMin": 1,
+        "indMin": 3,
         "indMax": 10
       },
       "tier2": {
         "bicMin": 1,
         "bicMax": 3,
-        "indMin": 1,
+        "indMin": 3,
         "indMax": 10
       },
       "tier3": {
         "bicMin": 1,
         "bicMax": 3,
-        "indMin": 1,
+        "indMin": 3,
         "indMax": 10
       }
     },
@@ -3830,22 +3832,22 @@ export const BENCHMARK_DATA = {
       "metric": "AI utilization in claims operations",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier2": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       },
       "tier3": {
-        "bicMin": 0.31,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 31.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3855,20 +3857,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 6,
         "bicMax": 12,
-        "indMin": 6,
-        "indMax": 12
+        "indMin": 3.3,
+        "indMax": 19.2
       },
       "tier2": {
         "bicMin": 4,
         "bicMax": 8,
-        "indMin": 4,
-        "indMax": 8
+        "indMin": 2.2,
+        "indMax": 12.8
       },
       "tier3": {
         "bicMin": 4,
         "bicMax": 8,
-        "indMin": 4,
-        "indMax": 8
+        "indMin": 2.2,
+        "indMax": 12.8
       }
     },
     {
@@ -3878,20 +3880,20 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 10,
         "bicMax": 15,
-        "indMin": 10,
-        "indMax": 15
+        "indMin": 5.5,
+        "indMax": 24.0
       },
       "tier2": {
         "bicMin": 8,
         "bicMax": 12,
-        "indMin": 8,
-        "indMax": 12
+        "indMin": 4.4,
+        "indMax": 19.2
       },
       "tier3": {
         "bicMin": 8,
         "bicMax": 12,
-        "indMin": 8,
-        "indMax": 12
+        "indMin": 4.4,
+        "indMax": 19.2
       }
     },
     {
@@ -3899,22 +3901,22 @@ export const BENCHMARK_DATA = {
       "metric": "Subrogation Assignment Ratio",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.4,
-        "bicMax": 0.6,
-        "indMin": 0.15,
-        "indMax": 0.3
+        "bicMin": 40.0,
+        "bicMax": 60.0,
+        "indMin": 15.0,
+        "indMax": 30.0
       },
       "tier2": {
-        "bicMin": 0.3,
-        "bicMax": 0.4,
-        "indMin": 0.1,
-        "indMax": 0.2
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 10.0,
+        "indMax": 20.0
       },
       "tier3": {
-        "bicMin": 0.3,
-        "bicMax": 0.4,
-        "indMin": 0.01,
-        "indMax": 0.1
+        "bicMin": 30.0,
+        "bicMax": 40.0,
+        "indMin": 1.0,
+        "indMax": 10.0
       }
     },
     {
@@ -3922,22 +3924,22 @@ export const BENCHMARK_DATA = {
       "metric": "Liability assessment accuracy rate",
       "units": "Percentage",
       "tier1": {
-        "bicMin": 0.81,
-        "bicMax": null,
-        "indMin": 0.81,
-        "indMax": null
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 77.0,
+        "indMax": 81.0
       },
       "tier2": {
-        "bicMin": 0.81,
-        "bicMax": null,
-        "indMin": 0.61,
-        "indMax": null
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 61.0,
+        "indMax": 77.0
       },
       "tier3": {
-        "bicMin": 0.81,
-        "bicMax": null,
-        "indMin": 0.51,
-        "indMax": null
+        "bicMin": 81.0,
+        "bicMax": 100.0,
+        "indMin": 51.0,
+        "indMax": 77.0
       }
     },
     {
@@ -3947,24 +3949,25 @@ export const BENCHMARK_DATA = {
       "tier1": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       },
       "tier2": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       },
       "tier3": {
         "bicMin": 30,
         "bicMax": 90,
-        "indMin": 60,
+        "indMin": 90,
         "indMax": 180
       }
     }
   ]
 };
+
 export const LOB_OPTIONS = [
   { id: "personal_lines", label: "Personal Lines" },
   { id: "commercial_lines", label: "Commercial Lines" },

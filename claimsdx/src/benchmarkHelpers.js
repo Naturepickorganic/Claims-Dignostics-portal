@@ -4,6 +4,7 @@
 // Page4, Page5, AdminPage and AppContext all import from this file.
 // ─────────────────────────────────────────────────────────────────────────────
 import { BENCHMARK_DATA } from "./benchmarkData.js";
+import { METRIC_BY_NAME } from "./engine/metricMaster.js";
 
 // Map carrier LOB IDs (Page2) → benchmarkData top-level keys
 export const LOB_TO_BENCH_KEY = {
@@ -33,6 +34,21 @@ export const BENCH_LOB_SHORT = {
 };
 
 // Category → lens mapping (benchmarkData categories → assessment lenses)
+// v41: metric-level lens assignments override the category map, so Technology and
+// Org Performance are fed by real metrics instead of falling back to constants.
+export const METRIC_TO_LENS = {
+  "AI utilization in claims operations": "technology",
+  "FNOL (First Notice of Loss) digital submission rate": "technology",
+  "Self-service adoption rate": "technology",
+  "Remote inspection completion rate": "technology",
+  "Telematics/IoT device integration rate for claims": "technology",
+  "Telemedicine utilization rate": "technology",
+  "Digital claims satisfaction score": "technology",
+  "Number of claims handled per adjuster": "org_performance",
+  "Number of adjusters per unit manager": "org_performance",
+  "Time to initial response": "org_performance",
+};
+
 export const BENCH_CAT_TO_LENS = {
   "Cost metrics":                        "financial_leakage",
   "Effectiveness metrics":               "quality_compliance",
@@ -78,6 +94,19 @@ export function isHigherBetter(metric) {
   return bicC >= indC;
 }
 
+// ─── v41: authored direction is the source of truth; heuristic is the fallback ──
+// Returns true (higher better), false (lower better), "target", or "context".
+export function metricDirection(entry) {
+  const m = METRIC_BY_NAME[entry.metric];
+  if (m) {
+    if (m.direction === "CONTEXT_ONLY") return "context";
+    if (m.direction === "TARGET_RANGE") return "target";
+    return m.direction === "LOW_BAD"; // LOW_BAD means low is bad, so higher is better
+  }
+  return isHigherBetter(entry);
+}
+export function isContextMetric(entry) { return metricDirection(entry) === "context"; }
+
 // Retrieve benchmarkData benchmark for a metric at a given tier (1|2|3)
 export function getBenchForTier(metric, tier) {
   return metric[`tier${tier || 2}`] || metric.tier2 || metric.tier1 || {};
@@ -87,6 +116,11 @@ export function getBenchForTier(metric, tier) {
 // 80-100 = BIC zone  |  50-80 = industry zone  |  0-50 = below industry
 export function scoreMetric(val, bench, hib) {
   const { indMin=0, indMax=0, bicMin=0, bicMax=0 } = bench;
+  if (hib === "target") {
+    if (val >= bicMin && val <= bicMax) return 90;
+    if (val >= indMin && val <= indMax) return 60;
+    return 30;
+  }
   const sd = (a, b) => (b === 0 ? 0 : a / b);
   let score;
   if (hib) {
@@ -130,13 +164,14 @@ export function computeLensScores(metricsData, carrierInfo, benchmarkOverrides =
       const val = parseFloat(raw);
       if (isNaN(val)) continue;
 
-      const lensKey = BENCH_CAT_TO_LENS[metric.category];
+      if (isContextMetric(metric)) continue; // context metrics size value, never score
+      const lensKey = METRIC_TO_LENS[metric.metric] || BENCH_CAT_TO_LENS[metric.category];
       if (!lensKey) continue;
 
       // Use override if admin has set one, else use benchmarkData default
       const overrideKey = `${benchLobKey}:${metric.metric}:${tier}`;
       const bench = benchmarkOverrides[overrideKey] || getBenchForTier(metric, tier);
-      const hib   = isHigherBetter(metric);
+      const hib   = metricDirection(metric);
       const score = scoreMetric(val, bench, hib);
 
       acc[lensKey].total += score;

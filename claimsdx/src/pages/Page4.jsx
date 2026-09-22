@@ -5,7 +5,7 @@ import { PageWrap, SectionHead } from "../components.jsx";
 import { useApp } from "../AppContext.jsx";
 import {
   BENCH_CATS, BENCH_CAT_SHORT, BENCH_LOB_SHORT,
-  getUniqueBenchKeys, getMetricsForLob, isHigherBetter,
+  getUniqueBenchKeys, getMetricsForLob, isHigherBetter, metricDirection, isContextMetric,
   getBenchForTier, makeMetricKey,
 } from "../benchmarkHelpers.js";
 
@@ -20,6 +20,12 @@ function getStatus(val, bench, hib) {
   if (!val || !bench) return null;
   const n = parseFloat(val);
   if (isNaN(n)) return null;
+  if (hib === "context") return null;
+  if (hib === "target") {
+    if (n >= bench.bicMin && n <= bench.bicMax) return "bic";
+    if (n >= bench.indMin && n <= bench.indMax) return "ind";
+    return "low";
+  }
   if (hib) {
     if (n >= bench.bicMin) return "bic";
     if (n >= bench.indMin) return "ind";
@@ -68,6 +74,11 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
   const [activeLobIdx, setActiveLobIdx] = useState(0);
   const [activeCat,    setActiveCat]    = useState(BENCH_CATS[0]);
   const [values,       setValues]       = useState(() => metricsData && Object.keys(metricsData).length > 0 ? metricsData : {});
+  // v47: hydrate saved metrics arriving after mount (resume flow); user edits win
+  useEffect(() => {
+    if (metricsData && Object.keys(metricsData).length > 0)
+      setValues(v => ({ ...metricsData, ...v }));
+  }, [metricsData]);
 
   // Sync values when metricsData changes (e.g. on resume from Dashboard)
   useEffect(() => {
@@ -269,7 +280,7 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
         )}
 
         {metrics.map((m, i) => {
-          const hib     = isHigherBetter(m);
+          const hib     = metricDirection(m);
           const overKey = `${activeLobKey}:${m.metric}:${carrierTier}`;
           const bench   = benchmarkOverrides?.[overKey] || getBenchForTier(m, carrierTier);
           const key     = makeMetricKey(activeLobKey, m.metric);
@@ -286,7 +297,7 @@ export default function Page4({ onNext, onBack, onDataChange, onSave, carrierLob
               <div>
                 <div style={{fontFamily:FONT.sans,fontSize:12,fontWeight:600,color:C.textMid,lineHeight:1.3}}>{m.metric}</div>
                 <div style={{fontFamily:FONT.sans,fontSize:10,color:C.textMuted,marginTop:2}}>
-                  {m.units} · {hib ? "↑ Higher = better" : "↓ Lower = better"}
+                  {m.units} · {hib === "context" ? "Context · sizes value, not scored" : hib === "target" ? "◎ Target range" : hib ? "↑ Higher = better" : "↓ Lower = better"}
                 </div>
               </div>
 

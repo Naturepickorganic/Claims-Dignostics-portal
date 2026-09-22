@@ -185,7 +185,7 @@ export const METRIC_MASTER = [
     ],
     "direction": "LOW_BAD",
     "role": "DRIVER",
-    "formulaType": "RECOVERY_RATE",
+    "formulaType": "PRODUCTIVITY",
     "valuePool": "SALVAGE",
     "primaryTheme": "SEVERITY_CONSERVATION",
     "parentName": null
@@ -202,7 +202,7 @@ export const METRIC_MASTER = [
     ],
     "direction": "LOW_BAD",
     "role": "DRIVER",
-    "formulaType": "RECOVERY_RATE",
+    "formulaType": "PRODUCTIVITY",
     "valuePool": "SUBRO",
     "primaryTheme": "SEVERITY_CONSERVATION",
     "parentName": null

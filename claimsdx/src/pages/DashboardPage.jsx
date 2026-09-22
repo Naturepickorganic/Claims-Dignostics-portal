@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Clock, CheckCircle2, AlertTriangle, ArrowRight,
-         TrendingUp, TrendingDown, Minus, Copy, Eye, ChevronRight, RefreshCw } from "lucide-react";
+         TrendingUp, TrendingDown, Minus, Copy, Eye, ChevronRight, RefreshCw, PenLine } from "lucide-react";
 import { C, FONT, card, btnPrimary, btnSecondary } from "../constants.js";
 import { PageWrap, Tag } from "../components.jsx";
 import { MOCK_ASSESSMENTS, getMockStats, LENS_LABELS, LENS_KEYS } from "../mockData.js";
@@ -64,7 +64,7 @@ function CarrierGrid({ assessments, onCarrierClick, onResume, onView }) {
   return (
     <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:14 }}>
       {Object.entries(byCarrier).map(([cid, assessments]) => {
-        const completed = assessments.filter(a => a.status === "complete").sort((a,b) => new Date(b.completed_at) - new Date(a.completed_at));
+        const completed = assessments.filter(a => a.status === "completed").sort((a,b) => new Date(b.completed_at) - new Date(a.completed_at));
         const inProg    = assessments.filter(a => a.status === "in_progress");
         const latest    = completed[0];
         const prev      = completed[1];
@@ -117,7 +117,7 @@ function CarrierGrid({ assessments, onCarrierClick, onResume, onView }) {
 }
 
 // List view row
-function AssessmentRow({ a, onResume, onView, onCarrierClick }) {
+function AssessmentRow({ a, onResume, onView, onCarrierClick, onReopen }) {
   const st = STATUS_CFG[a.status] || STATUS_CFG.in_progress;
   const Icon = st.Icon;
   const days = daysSince(a.started_at);
@@ -161,10 +161,16 @@ function AssessmentRow({ a, onResume, onView, onCarrierClick }) {
             <ArrowRight size={11}/> Resume
           </button>
         )}
-        {a.status==="complete" && (
-          <button onClick={()=>onView(a)} style={{ ...btnSecondary, padding:"5px 12px", fontSize:11, borderRadius:5, gap:4, color:"#1a4731", borderColor:"#c3ddd0" }}>
-            <Eye size={11}/> View
-          </button>
+        {(a.status==="completed" || a.status==="complete") && (
+          <>
+            <button onClick={()=>onView(a)} style={{ ...btnSecondary, padding:"5px 12px", fontSize:11, borderRadius:5, gap:4, color:"#1a4731", borderColor:"#c3ddd0" }}>
+              <Eye size={11}/> View
+            </button>
+            <button onClick={()=>onReopen && onReopen(a)} title="Reopen to edit metrics or answers, then submit again"
+              style={{ ...btnSecondary, padding:"5px 12px", fontSize:11, borderRadius:5, gap:4, color:"#92400e", borderColor:"#fcd34d", background:"#fffbeb" }}>
+              <PenLine size={11}/> Reopen
+            </button>
+          </>
         )}
         <button onClick={()=>onView({ ...a, cloneMode:true })} title="New assessment for this carrier"
           style={{ padding:"5px 8px", borderRadius:5, border:"1px solid #d8ebe2", background:"white", cursor:"pointer", color:C.textMuted, display:"flex", alignItems:"center" }}>
@@ -176,7 +182,7 @@ function AssessmentRow({ a, onResume, onView, onCarrierClick }) {
 }
 
 // ── Main export ────────────────────────────────────────────────
-export default function DashboardPage({ onNewAssessment, onResume, onViewResults, onCarrierProfile, profile }) {
+export default function DashboardPage({ onNewAssessment, onResume, onViewResults, onCarrierProfile, onReopen, profile }) {
   const { session, loadProgress, loadProgressById } = useApp();
   const [viewMode, setViewMode] = useState("list");
   const [search, setSearch]     = useState("");
@@ -233,7 +239,7 @@ export default function DashboardPage({ onNewAssessment, onResume, onViewResults
 
   // Compute stats from current data
   const stats = useMemo(() => {
-    const complete   = assessments.filter(a => a.status === "complete");
+    const complete   = assessments.filter(a => a.status === "completed");
     const inProgress = assessments.filter(a => a.status === "in_progress");
     const thisMonth  = complete.filter(a => new Date(a.completed_at) > new Date(Date.now() - 30*86400000));
     const scored     = complete.filter(a => a.overall_score);
@@ -319,7 +325,7 @@ export default function DashboardPage({ onNewAssessment, onResume, onViewResults
                 style={{ width:"100%", padding:"8px 12px 8px 32px", border:"1px solid #d8ebe2", borderRadius:6, fontFamily:FONT.sans, fontSize:13, outline:"none", boxSizing:"border-box" }}/>
             </div>
             <div style={{ display:"flex", gap:4 }}>
-              {[["all","All"],["in_progress","In Progress"],["complete","Complete"]].map(([v,l]) => (
+              {[["all","All"],["in_progress","In Progress"],["completed","Complete"]].map(([v,l]) => (
                 <button key={v} onClick={()=>setStatus(v)} style={{ padding:"6px 11px", borderRadius:5, fontSize:11, fontWeight:statusFilter===v?700:400, fontFamily:FONT.sans, cursor:"pointer", border:"1px solid "+(statusFilter===v?"#1a4731":"#d8ebe2"), background:statusFilter===v?"#1a4731":"white", color:statusFilter===v?"white":C.textSoft }}>{l}</button>
               ))}
             </div>
@@ -359,7 +365,8 @@ export default function DashboardPage({ onNewAssessment, onResume, onViewResults
               <AssessmentRow key={(a.assessment_id||a.id||i)+i} a={a}
                 onResume={handleResume}
                 onView={onViewResults}
-                onCarrierClick={onCarrierProfile}/>
+                onCarrierClick={onCarrierProfile}
+                onReopen={onReopen}/>
             ))}
           </div>
         )}

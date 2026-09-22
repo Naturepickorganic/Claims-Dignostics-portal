@@ -423,7 +423,8 @@ export function runEngine({ metricsData, carrierInfo, benchmarkOverrides = {}, c
   }
 
   return {
-    meta: { tier, selectedLobs, generatedAt: new Date().toISOString(), config: { gates: cfg.gates, waves: cfg.waves } },
+    meta: { tier, selectedLobs, generatedAt: new Date().toISOString(), config: { gates: cfg.gates, waves: cfg.waves },
+      inputMetricCount: Object.keys(metricsData || {}).length, hasAnnualClaims: eco.annualClaims != null, hasDep: eco.dep != null },
     instances, branches, pools: Object.values(pools), offerings, dataFieldsToBuild: dataFields,
   };
 }
